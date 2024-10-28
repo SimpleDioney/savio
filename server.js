@@ -206,6 +206,42 @@ app.get('/api/employees/:id/tasks', authenticateToken, async (req, res) => {
     }
 });
 
+// Rota para excluir funcionário
+app.delete('/api/employees/:id', authenticateToken, async (req, res) => {
+    try {
+        const employeeId = req.params.id;
+        
+        // Verificar se existem tarefas associadas
+        const tasks = await db.all(
+            'SELECT * FROM tasks WHERE employee_id = ?',
+            [employeeId]
+        );
+
+        if (tasks.length > 0) {
+            // Opcionalmente, você pode deletar as tarefas também
+            await db.run(
+                'DELETE FROM tasks WHERE employee_id = ?',
+                [employeeId]
+            );
+        }
+
+        // Excluir funcionário
+        const result = await db.run(
+            'DELETE FROM employees WHERE id = ?',
+            [employeeId]
+        );
+
+        if (result.changes === 0) {
+            return res.status(404).json({ message: 'Funcionário não encontrado' });
+        }
+
+        res.json({ message: 'Funcionário excluído com sucesso' });
+    } catch (error) {
+        console.error('Erro ao excluir funcionário:', error);
+        res.status(500).json({ message: 'Erro ao excluir funcionário' });
+    }
+});
+
 // Rotas para tarefas
 app.get('/api/tasks', authenticateToken, async (req, res) => {
     try {
