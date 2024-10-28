@@ -1,0 +1,64 @@
+{
+    "agent": {
+        "metrics_collection_interval": 60,
+        "run_as_user": "root"
+    },
+    "metrics": {
+        "namespace": "TaskManagementSystem",
+        "metrics_collected": {
+            "cpu": {
+                "resources": ["*"],
+                "measurement": ["cpu_usage_idle", "cpu_usage_user", "cpu_usage_system"],
+                "totalcpu": true
+            },
+            "disk": {
+                "resources": ["/"],
+                "measurement": ["used_percent", "inodes_free"],
+                "ignore_file_system_types": ["sysfs", "devtmpfs"]
+            },
+            "diskio": {
+                "resources": ["*"],
+                "measurement": ["reads", "writes", "read_bytes", "write_bytes"]
+            },
+            "mem": {
+                "measurement": ["mem_used_percent", "mem_available", "mem_total"]
+            },
+            "net": {
+                "resources": ["*"],
+                "measurement": ["bytes_sent", "bytes_recv", "packets_sent", "packets_recv"]
+            },
+            "processes": {
+                "measurement": ["running", "sleeping", "dead"]
+            }
+        },
+        "append_dimensions": {
+            "InstanceId": "${aws:InstanceId}"
+        }
+    },
+    "logs": {
+        "logs_collected": {
+            "files": {
+                "collect_list": [
+                    {
+                        "file_path": "/home/ubuntu/task-management/logs/error.log",
+                        "log_group_name": "task-management-errors",
+                        "log_stream_name": "{instance_id}",
+                        "retention_in_days": 7
+                    },
+                    {
+                        "file_path": "/home/ubuntu/task-management/logs/output.log",
+                        "log_group_name": "task-management-output",
+                        "log_stream_name": "{instance_id}",
+                        "retention_in_days": 7
+                    },
+                    {
+                        "file_path": "/var/log/nginx/task-management-error.log",
+                        "log_group_name": "nginx-errors",
+                        "log_stream_name": "{instance_id}",
+                        "retention_in_days": 7
+                    }
+                ]
+            }
+        }
+    }
+}
