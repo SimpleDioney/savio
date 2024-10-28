@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Administração - Sistema de Tarefas</title>
+    <style>
+      :root {
+        --bg-primary: #1a1a1a;
+        --bg-secondary: #2d2d2d;
+        --text-primary: #ffffff;
+        --text-secondary: #b3b3b3;
+        --accent: #007bff;
+        --success: #28a745;
+        --danger: #dc3545;
+        --warning: #ffc107;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", sans-serif;
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+      }
+
+      .header {
+        background-color: var(--bg-secondary);
+        padding: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .main-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+
+      .card {
+        background-color: var(--bg-secondary);
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+      }
+
+      .btn {
+        background-color: var(--accent);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 0.25rem;
+      }
+
+      .btn-success {
+        background-color: var(--success);
+      }
+      .btn-danger {
+        background-color: var(--danger);
+      }
+      .btn-warning {
+        background-color: var(--warning);
+      }
+
+      .btn:hover {
+        opacity: 0.9;
+      }
+
+      .form-group {
+        margin-bottom: 1rem;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+      }
+
+      .form-group input,
+      .form-group select,
+      .form-group textarea {
+        width: 100%;
+        padding: 0.5rem;
+        background-color: var(--bg-primary);
+        border: 1px solid var(--text-secondary);
+        color: var(--text-primary);
+        border-radius: 4px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+
+      .modal-content {
+        background-color: var(--bg-secondary);
+        margin: 15% auto;
+        padding: 20px;
+        width: 80%;
+        max-width: 500px;
+        border-radius: 8px;
+      }
+
+      .tab-container {
+        margin-bottom: 2rem;
+      }
+
+      .tab-buttons {
+        display: flex;
+        margin-bottom: 1rem;
+      }
+
+      .tab-button {
+        background: var(--bg-secondary);
+        border: none;
+        color: var(--text-primary);
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+      }
+
+      .tab-button.active {
+        border-bottom-color: var(--accent);
+      }
+
+      .tab-content {
+        display: none;
+      }
+
+      .tab-content.active {
+        display: block;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+      }
+
+      th,
+      td {
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid var(--bg-primary);
+      }
+
+      th {
+        background-color: var(--bg-primary);
+      }
+
+      .calendar {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 4px;
+        margin: 1rem 0;
+      }
+
+      .calendar-day {
+        padding: 0.5rem;
+        text-align: center;
+        background-color: var(--bg-primary);
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .calendar-day.has-leave {
+        background-color: var(--warning);
+        color: var(--bg-primary);
+      }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <h1>Painel Administrativo</h1>
+      <div>
+        <a href="/" class="btn">Voltar para Principal</a>
+        <button class="btn btn-danger" onclick="logout()">Sair</button>
+      </div>
+    </header>
+
+    <div class="main-container">
+      <div class="tab-container">
+        <div class="tab-buttons">
+          <button class="tab-button active" onclick="showTab('employees')">
+            Funcionários
+          </button>
+          <button class="tab-button" onclick="showTab('fixed-tasks')">
+            Tarefas Fixas
+          </button>
+          <button class="tab-button" onclick="showTab('leaves')">Folgas</button>
+          <button class="tab-button" onclick="showTab('reports')">
+            Relatórios
+          </button>
+        </div>
+
+        <!-- Aba de Funcionários -->
+        <div id="employees" class="tab-content active">
+          <div class="card">
+            <h2>Adicionar Funcionário</h2>
+            <div class="form-group">
+              <label for="employeeName">Nome do Funcionário</label>
+              <input type="text" id="employeeName" />
+            </div>
+            <button class="btn btn-success" onclick="addEmployee()">
+              Adicionar Funcionário
+            </button>
+          </div>
+
+          <div class="card">
+            <h2>Lista de Funcionários</h2>
+            <div id="employeesList" class="grid"></div>
+          </div>
+        </div>
+
+        <!-- Aba de Tarefas Fixas -->
+        <div id="fixed-tasks" class="tab-content">
+          <div class="card">
+            <h2>Adicionar Tarefa Fixa</h2>
+            <div class="form-group">
+              <label for="fixedTaskName">Nome da Tarefa</label>
+              <input type="text" id="fixedTaskName" />
+            </div>
+            <div class="form-group">
+              <label for="fixedTaskEmployee">Funcionário</label>
+              <select id="fixedTaskEmployee"></select>
+            </div>
+            <button class="btn btn-success" onclick="addFixedTask()">
+              Adicionar Tarefa Fixa
+            </button>
+          </div>
+
+          <div class="card">
+            <h2>Tarefas Fixas Atribuídas</h2>
+            <div id="fixedTasksList"></div>
+          </div>
+        </div>
+
+        <!-- Aba de Folgas -->
+        <div id="leaves" class="tab-content">
+          <div class="card">
+            <h2>Gerenciar Folgas</h2>
+            <div class="form-group">
+              <label for="leaveEmployee">Funcionário</label>
+              <select id="leaveEmployee"></select>
+            </div>
+            <div class="form-group">
+              <label for="leaveDate">Data da Folga</label>
+              <input type="date" id="leaveDate" />
+            </div>
+            <button class="btn btn-success" onclick="addLeave()">
+              Adicionar Folga
+            </button>
+          </div>
+
+          <div class="card">
+            <h2>Calendário de Folgas</h2>
+            <div class="form-group">
+              <label for="leaveMonth">Mês</label>
+              <input
+                type="month"
+                id="leaveMonth"
+                onchange="updateLeavesCalendar()"
+              />
+            </div>
+            <div id="leavesCalendar" class="calendar"></div>
+          </div>
+        </div>
+
+        <!-- Aba de Relatórios -->
+        <div id="reports" class="tab-content">
+          <div class="card">
+            <h2>Gerar Relatório</h2>
+            <div class="form-group">
+              <label for="reportType">Tipo de Relatório</label>
+              <select id="reportType">
+                <option value="daily">Diário</option>
+                <option value="weekly">Semanal</option>
+                <option value="monthly">Mensal</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="reportDate">Data</label>
+              <input type="date" id="reportDate" />
+            </div>
+            <button class="btn" onclick="generateReport()">
+              Gerar Relatório
+            </button>
+          </div>
+
+          <div class="card">
+            <h2>Relatório</h2>
+            <div id="reportContent"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let currentUser = null;
+      let employees = [];
+      let fixedTasks = [];
+      let leaves = [];
+
+      // Verificar autenticação
+      function checkAuth() {
+          const token = localStorage.getItem('token');
+          if (!token) {
+              window.location.href = '/';
+          }
+      }
+
+      // Funções de navegação
+      function showTab(tabId) {
+          document.querySelectorAll('.tab-content').forEach(tab => {
+              tab.classList.remove('active');
+          });
+          document.querySelectorAll('.tab-button').forEach(button => {
+              button.classList.remove('active');
+          });
+
+          document.getElementById(tabId).classList.add('active');
+          event.target.classList.add('active');
+      }
+
+      // Funcionários
+      async function loadEmployees() {
+          try {
+              const response = await fetch('/api/employees', {
+                  headers: {
+                      'Authorization': `Bearer ${localStorage.getItem('token')}`
+                  }
+              });
+              employees = await response.json();
+              renderEmployees();
+              updateEmployeeSelects();
+          } catch (error) {
+              console.error('Erro ao carregar funcionários:', error);
+          }
+      }
+
+      function renderEmployees() {
+          const container = document.getElementById('employeesList');
+          container.innerHTML = employees.map(employee => `
+              <div class="card">
+                  <h3>${employee.name}</h3>
+                  <button class="btn btn-danger" onclick="deleteEmployee(${employee.id})">Excluir</button>
+              </div>
+          `).join('');
+      }
+
+      async function addEmployee() {
+          const name = document.getElementById('employeeName').value;
+          if (!name) return;
+
+          try {
+              const response = await fetch('/api/employees', {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${localStorage.getItem('token')}`
+                  },
+                  body: JSON.stringify({ name })
+              });
+
+              if (response.ok) {
+                  document.getElementById('employeeName').value = '';
+                  loadEmployees();
+              }
+          } catch (error) {
+              console.error('Erro ao adicionar funcionário:', error);
+          }
+      }
+
+      // Tarefas Fixas
+      async function loadFixedTasks() {
+          try {
+              const response = await fetch('/api/tasks/fixed', {
+                  headers: {
+                      'Authorization': `Bearer ${localStorage.getItem('token')}`
+                  }
+              });
+              fixedTasks = await response.json();
+              renderFixedTasks();
+          } catch (error) {
+              console.error('Erro ao carregar tarefas fixas:', error);
+          }
+      }
+
+      function renderFixedTasks() {
+          const container = document.getElementById('fixedTasksList');
+          container.innerHTML = fixedTasks.map(task => `
+              <div class="card">
+                  <h3>${task.name}</h3>
+                  <p>Funcionário: ${employees.find(e => e.id === task.employeeId)?.name}</p>
+                  <button class="btn btn-danger" onclick="deleteFixedTask(${task.id})">Excluir</button>
+              </div>
+          `).join('');
+      }
+
+      async function addFixedTask() {
+          const name = document.getElementById('fixedTaskName').value;
+          const employeeId = document.getElementById('fixedTaskEmployee').value;
+
+          if (!name || !employeeId) return;
+
+          try {
+              const response = await fetch('/api/tasks/fixed', {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${localStorage.getItem('token')}`
+                  },
+                  body: JSON.stringify({ name, employeeId: parseInt(employeeId), isFixed: true })
+              });
+
+              if (response.ok) {
+                  document.getElementById('fixedTaskName').value = '';
+                  loadFixedTasks();
+              }
+          } catch (error) {
+              console.error('Erro ao adicionar tarefa fixa:', error);
+          }
+      }
+
+      // Folgas
+      async function loadLeaves() {
+          try {
+              const response = await fetch('/api/leaves', {
+                  headers: {
+                      'Authorization': `Bearer ${localStorage.getItem('token')}`
+                  }
+              });
+              leaves = await response.json();
+              updateLeavesCalendar();
+          } catch (error) {
+              console.error('Erro ao carregar folgas:', error);
+          }
+      }
+
+      function updateLeavesCalendar() {
+          const month = document.getElementById('leaveMonth').value;
+          if (!month) return;
+
+          const [year, monthNum] = month.split('-');
+          const firstDay = new Date(year, monthNum - 1, 1);
+          const lastDay = new Date(year, monthNum, 0);
+
+          const calendar = document.getElementById('leavesCalendar');
+          calendar.innerHTML = '';
+
+          // Adicionar cabeçalho dos dias da semana
+          const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+          weekDays.forEach(day => {
+              const dayEl = document.createElement('div');
+              dayEl.className = 'calendar-day';
+              dayEl.textContent = day;
+              calendar.appendChild(dayEl);
+          });
+
+          for (let i = 0; i < firstDay.getDay(); i++) {
+              const emptyDay = document.createElement('div');
+              emptyDay.className = 'calendar-day';
+              calendar.appendChild(emptyDay);
+          }
+
+              // Continuação da função updateLeavesCalendar()
+              const daysInMonth = lastDay.getDate();
+
+              // Adicionar os dias do mês
+              for (let day = 1; day <= daysInMonth; day++) {
+                  const date = `${year}-${monthNum.padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+                  const hasLeave = leaves.some(leave =>
+                      leave.date === date
+                  );
+
+                  const dayEl = document.createElement('div');
+                  dayEl.className = `calendar-day${hasLeave ? ' has-leave' : ''}`;
+                  dayEl.textContent = day;
+                  dayEl.onclick = () => toggleLeave(date);
+                  calendar.appendChild(dayEl);
+              }
+          }
+
+          async function toggleLeave(date) {
+              const employeeId = document.getElementById('leaveEmployee').value;
+              if (!employeeId) {
+                  alert('Selecione um funcionário');
+                  return;
+              }
+
+              try {
+                  const existingLeave = leaves.find(l =>
+                      l.date === date && l.employeeId === parseInt(employeeId)
+                  );
+
+                  if (existingLeave) {
+                      // Remover folga
+                      await fetch(`/api/leaves/${existingLeave.id}`, {
+                          method: 'DELETE',
+                          headers: {
+                              'Authorization': `Bearer ${localStorage.getItem('token')}`
+                          }
+                      });
+                  } else {
+                      // Adicionar folga
+                      await fetch('/api/leaves', {
+                          method: 'POST',
+                          headers: {
+                              'Content-Type': 'application/json',
+                              'Authorization': `Bearer ${localStorage.getItem('token')}`
+                          },
+                          body: JSON.stringify({ employeeId: parseInt(employeeId), date })
+                      });
+                  }
+
+                  await loadLeaves();
+              } catch (error) {
+                  console.error('Erro ao gerenciar folga:', error);
+                  alert('Erro ao gerenciar folga');
+              }
+          }
+
+          async function addLeave() {
+              const employeeId = document.getElementById('leaveEmployee').value;
+              const date = document.getElementById('leaveDate').value;
+
+              if (!employeeId || !date) {
+                  alert('Preencha todos os campos');
+                  return;
+              }
+
+              try {
+                  await fetch('/api/leaves', {
+                      method: 'POST',
+                      headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${localStorage.getItem('token')}`
+                      },
+                      body: JSON.stringify({ employeeId: parseInt(employeeId), date })
+                  });
+
+                  document.getElementById('leaveDate').value = '';
+                  await loadLeaves();
+              } catch (error) {
+                  console.error('Erro ao adicionar folga:', error);
+                  alert('Erro ao adicionar folga');
+              }
+          }
+
+          // Relatórios
+          async function generateReport() {
+              const type = document.getElementById('reportType').value;
+              const date = document.getElementById('reportDate').value;
+
+              if (!date) {
+                  alert('Selecione uma data');
+                  return;
+              }
+
+              try {
+                  const response = await fetch(`/api/reports?type=${type}&date=${date}`, {
+                      headers: {
+                          'Authorization': `Bearer ${localStorage.getItem('token')}`
+                      }
+                  });
+
+                  const report = await response.json();
+                  renderReport(report);
+              } catch (error) {
+                  console.error('Erro ao gerar relatório:', error);
+                  alert('Erro ao gerar relatório');
+              }
+          }
+
+          function renderReport(report) {
+              const container = document.getElementById('reportContent');
+
+              let html = `
+                  <h3>Relatório - ${formatDate(report.startDate)} a ${formatDate(report.endDate)}</h3>
+
+                  <table>
+                      <thead>
+                          <tr>
+                              <th>Funcionário</th>
+                              <th>Tarefas Realizadas</th>
+                              <th>Folgas</th>
+                              <th>Taxa de Conclusão</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+              `;
+
+              report.employeeStats.forEach(stat => {
+                  html += `
+                      <tr>
+                          <td>${stat.employeeName}</td>
+                          <td>${stat.tasksCompleted}</td>
+                          <td>${stat.leaves}</td>
+                          <td>${stat.completionRate}%</td>
+                      </tr>
+                  `;
+              });
+
+              html += `
+                      </tbody>
+                  </table>
+
+                  <h4>Distribuição de Tarefas</h4>
+                  <table>
+                      <thead>
+                          <tr>
+                              <th>Tarefa</th>
+                              <th>Frequência</th>
+                              <th>Funcionários</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+              `;
+
+              report.taskStats.forEach(stat => {
+                  html += `
+                      <tr>
+                          <td>${stat.taskName}</td>
+                          <td>${stat.frequency}</td>
+                          <td>${stat.employees.join(', ')}</td>
+                      </tr>
+                  `;
+              });
+
+              html += `
+                      </tbody>
+                  </table>
+              `;
+
+              container.innerHTML = html;
+          }
+
+          // Funções auxiliares
+          function updateEmployeeSelects() {
+              const selects = ['fixedTaskEmployee', 'leaveEmployee'];
+              selects.forEach(selectId => {
+                  const select = document.getElementById(selectId);
+                  if (select) {
+                      select.innerHTML = `
+                          <option value="">Selecione um funcionário</option>
+                          ${employees.map(emp => `
+                              <option value="${emp.id}">${emp.name}</option>
+                          `).join('')}
+                      `;
+                  }
+              });
+          }
+
+          function formatDate(dateStr) {
+              const date = new Date(dateStr);
+              return date.toLocaleDateString('pt-BR');
+          }
+
+          function logout() {
+              localStorage.removeItem('token');
+              window.location.href = '/';
+          }
+
+          // Inicialização
+          async function init() {
+              checkAuth();
+              await loadEmployees();
+              await loadFixedTasks();
+              await loadLeaves();
+
+              // Configurar data atual para os campos de data
+              const today = new Date().toISOString().split('T')[0];
+              document.getElementById('leaveDate').value = today;
+              document.getElementById('reportDate').value = today;
+              document.getElementById('leaveMonth').value = today.substring(0, 7);
+          }
+
+          init();
+      
+    </script>
+  </body>
+</html>
