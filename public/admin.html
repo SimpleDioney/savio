@@ -669,6 +669,31 @@
               });
           }
 
+
+          async function deleteEmployee(employeeId) {
+    if (!confirm('Tem certeza que deseja excluir este funcionário?')) return;
+
+    try {
+        const response = await fetch(`/api/employees/${employeeId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Erro ao excluir funcionário');
+        }
+
+        loadEmployees(); // Recarrega a lista de funcionários
+        showNotification('Funcionário excluído com sucesso', 'success');
+    } catch (error) {
+        console.error('Erro ao excluir funcionário:', error);
+        showNotification(error.message, 'error');
+    }
+}
+
           function formatDate(dateStr) {
               const date = new Date(dateStr);
               return date.toLocaleDateString('pt-BR');
