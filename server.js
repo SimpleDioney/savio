@@ -22,14 +22,16 @@ async function initializeDb() {
     await db.exec(`
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE,
-            password TEXT,
-            is_admin BOOLEAN
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            is_admin BOOLEAN DEFAULT FALSE,
+            employee_id INTEGER,
+            FOREIGN KEY (employee_id) REFERENCES employees (id)
         );
 
         CREATE TABLE IF NOT EXISTS employees (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
+            name TEXT NOT NULL,
             active BOOLEAN DEFAULT TRUE
         );
 
@@ -60,16 +62,33 @@ async function initializeDb() {
             FOREIGN KEY (task_id) REFERENCES tasks (id),
             FOREIGN KEY (employee_id) REFERENCES employees (id)
         );
+
+        CREATE TABLE IF NOT EXISTS fixed_task_status (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            task_id INTEGER,
+            date TEXT,
+            status TEXT DEFAULT 'pendente',
+            FOREIGN KEY (task_id) REFERENCES tasks (id),
+            UNIQUE(task_id, date)
+        );
     `);
 
     // Criar usuário admin padrão
-    const adminExists = await db.get('SELECT id FROM users WHERE username = ?', ['admin']);
-    if (!adminExists) {
-        const hashedPassword = await bcrypt.hash('admin123', 10);
-        await db.run(
-            'INSERT INTO users (username, password, is_admin) VALUES (?, ?, ?)',
-            ['admin', hashedPassword, true]
+    try {
+        const adminExists = await db.get(
+            'SELECT id FROM users WHERE username = ?', 
+            ['admin']
         );
+        
+        if (!adminExists) {
+            const hashedPassword = await bcrypt.hash('admin123', 10);
+            await db.run(
+                'INSERT INTO users (username, password, is_admin) VALUES (?, ?, ?)',
+                ['admin', hashedPassword, true]
+            );
+        }
+    } catch (error) {
+        console.error('Erro ao criar usuário admin:', error);
     }
 }
 
@@ -91,39 +110,121 @@ function authenticateToken(req, res, next) {
 app.post('/api/login', async (req, res) => {
     try {
         const { username, password } = req.body;
-        const user = await db.get('SELECT * FROM users WHERE username = ?', [username]);
-
-        if (!user || !(await bcrypt.compare(password, user.password))) {
-            return res.status(401).json({ message: 'Usuário ou senha inválidos' });
+        
+        if (!username || !password) {
+            return res.status(400).json({ 
+                message: 'Usuário e senha são obrigatórios' 
+            });
         }
 
-        const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET);
-        res.json({ token });
+        const user = await db.get(`
+            SELECT u.*, e.name as employee_name 
+            FROM users u 
+            LEFT JOIN employees e ON u.employee_id = e.id 
+            WHERE u.username = ?
+        `, [username]);
+
+        if (!user) {
+            return res.status(401).json({ 
+                message: 'Usuário ou senha inválidos' 
+            });
+        }
+
+        const validPassword = await bcrypt.compare(password, user.password);
+        if (!validPassword) {
+            return res.status(401).json({ 
+                message: 'Usuário ou senha inválidos' 
+            });
+        }
+
+        const token = jwt.sign({ 
+            id: user.id, 
+            username: user.username,
+            isAdmin: user.is_admin,
+            employeeId: user.employee_id,
+            employeeName: user.employee_name
+        }, JWT_SECRET);
+        
+        // Determinar saudação
+        const hour = new Date().getHours();
+        let greeting = 'Boa noite';
+        if (hour < 12) greeting = 'Bom dia';
+        else if (hour < 18) greeting = 'Boa tarde';
+
+        res.json({ 
+            token,
+            greeting,
+            isAdmin: user.is_admin,
+            employeeName: user.employee_name 
+        });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Erro no servidor' });
+        console.error('Erro no login:', error);
+        res.status(500).json({ 
+            message: 'Erro ao realizar login' 
+        });
     }
 });
 
 // Rotas para funcionários
-app.get('/api/employees', authenticateToken, async (req, res) => {
+app.post('/api/employees', authenticateToken, async (req, res) => {
     try {
-        const employees = await db.all('SELECT * FROM employees');
+        const { name, username, password } = req.body;
         
-        // Verificar folgas do dia
-        const today = new Date().toISOString().split('T')[0];
-        for (let emp of employees) {
-            const onLeave = await db.get(
-                'SELECT * FROM leaves WHERE employee_id = ? AND date = ?',
-                [emp.id, today]
-            );
-            emp.onLeave = !!onLeave;
+        if (!name || !username || !password) {
+            return res.status(400).json({ 
+                message: 'Nome, usuário e senha são obrigatórios' 
+            });
         }
-        
-        res.json(employees);
+
+        // Iniciar transação
+        await db.run('BEGIN TRANSACTION');
+
+        try {
+            // Verificar se usuário já existe
+            const existingUser = await db.get(
+                'SELECT id FROM users WHERE username = ?',
+                [username]
+            );
+
+            if (existingUser) {
+                await db.run('ROLLBACK');
+                return res.status(400).json({ 
+                    message: 'Nome de usuário já existe' 
+                });
+            }
+            
+            // Inserir funcionário
+            const empResult = await db.run(
+                'INSERT INTO employees (name, active) VALUES (?, ?)',
+                [name, true]
+            );
+            
+            // Criar hash da senha
+            const hashedPassword = await bcrypt.hash(password, 10);
+            
+            // Criar usuário para o funcionário
+            await db.run(
+                'INSERT INTO users (username, password, is_admin, employee_id) VALUES (?, ?, ?, ?)',
+                [username, hashedPassword, false, empResult.lastID]
+            );
+            
+            await db.run('COMMIT');
+            
+            res.json({ 
+                id: empResult.lastID, 
+                name,
+                username,
+                message: 'Funcionário criado com sucesso'
+            });
+        } catch (error) {
+            await db.run('ROLLBACK');
+            throw error;
+        }
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Erro ao buscar funcionários' });
+        console.error('Erro ao criar funcionário:', error);
+        res.status(500).json({ 
+            message: 'Erro ao criar funcionário' 
+        });
     }
 });
 
@@ -151,17 +252,49 @@ app.get('/api/employees/available', authenticateToken, async (req, res) => {
     }
 });
 
-app.post('/api/employees', authenticateToken, async (req, res) => {
+app.get('/api/employees', authenticateToken, async (req, res) => {
     try {
-        const { name } = req.body;
-        const result = await db.run(
-            'INSERT INTO employees (name) VALUES (?)',
-            [name]
-        );
-        res.json({ id: result.lastID, name });
+        const employees = await db.all(`
+            SELECT 
+                e.*,
+                u.username,
+                CASE 
+                    WHEN EXISTS (
+                        SELECT 1 FROM leaves l 
+                        WHERE l.employee_id = e.id 
+                        AND l.date = date('now', 'localtime')
+                    ) THEN 1 
+                    ELSE 0 
+                END as on_leave
+            FROM employees e
+            LEFT JOIN users u ON e.id = u.employee_id
+            WHERE e.active = 1
+            ORDER BY e.name
+        `);
+        
+        res.json(employees);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Erro ao criar funcionário' });
+        console.error('Erro ao buscar funcionários:', error);
+        res.status(500).json({ 
+            message: 'Erro ao buscar funcionários' 
+        });
+    }
+});
+
+app.get('/api/users/check/:username', authenticateToken, async (req, res) => {
+    try {
+        const { username } = req.params;
+        const user = await db.get(
+            'SELECT id FROM users WHERE username = ?',
+            [username]
+        );
+        
+        res.json({ exists: !!user });
+    } catch (error) {
+        console.error('Erro ao verificar usuário:', error);
+        res.status(500).json({ 
+            message: 'Erro ao verificar usuário' 
+        });
     }
 });
 
@@ -245,14 +378,37 @@ app.delete('/api/employees/:id', authenticateToken, async (req, res) => {
 // Rotas para tarefas
 app.get('/api/tasks', authenticateToken, async (req, res) => {
     try {
-        const today = new Date().toISOString().split('T')[0];
-        const tasks = await db.all(
-            'SELECT * FROM tasks WHERE date = ? OR is_fixed = 1',
-            [today]
-        );
+        const { date, status } = req.query;
+        const selectedDate = date || new Date().toISOString().split('T')[0];
+
+        let query = `
+            SELECT t.*,
+                   e.name as employee_name,
+                   COALESCE(fts.status, 
+                       CASE WHEN t.is_fixed = 1 THEN 'pendente' ELSE t.status END
+                   ) as status
+            FROM tasks t
+            LEFT JOIN employees e ON t.employee_id = e.id
+            LEFT JOIN fixed_task_status fts ON t.id = fts.task_id 
+                AND fts.date = ?
+            WHERE (t.date = ? OR t.is_fixed = 1)
+        `;
+        const params = [selectedDate, selectedDate];
+
+        if (status) {
+            query += ` AND (
+                CASE 
+                    WHEN t.is_fixed = 1 THEN COALESCE(fts.status, 'pendente')
+                    ELSE t.status 
+                END
+            ) = ?`;
+            params.push(status);
+        }
+
+        const tasks = await db.all(query, params);
         res.json(tasks);
     } catch (error) {
-        console.error(error);
+        console.error('Erro ao buscar tarefas:', error);
         res.status(500).json({ message: 'Erro ao buscar tarefas' });
     }
 });
@@ -293,17 +449,61 @@ app.delete('/api/tasks/:id', authenticateToken, async (req, res) => {
 app.patch('/api/tasks/:id/status', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
-        const { status } = req.body;
+        const { status, date } = req.body;
+        
+        // Verificar se a tarefa existe e se é fixa
+        const task = await db.get('SELECT * FROM tasks WHERE id = ?', [id]);
+        if (!task) {
+            return res.status(404).json({ message: 'Tarefa não encontrada' });
+        }
 
-        await db.run(
-            'UPDATE tasks SET status = ? WHERE id = ?',
-            [status, id]
-        );
+        // Verificar permissões
+        if (!req.user.isAdmin && task.employee_id !== req.user.employeeId) {
+            return res.status(403).json({ message: 'Sem permissão para atualizar esta tarefa' });
+        }
+
+        if (task.is_fixed) {
+            // Para tarefas fixas, atualizar ou inserir status do dia
+            const currentDate = date || new Date().toISOString().split('T')[0];
+            
+            await db.run(`
+                INSERT INTO fixed_task_status (task_id, date, status)
+                VALUES (?, ?, ?)
+                ON CONFLICT (task_id, date) 
+                DO UPDATE SET status = ?
+            `, [id, currentDate, status, status]);
+        } else {
+            // Para tarefas normais, atualizar normalmente
+            await db.run('UPDATE tasks SET status = ? WHERE id = ?', [status, id]);
+        }
 
         res.json({ message: 'Status atualizado com sucesso' });
     } catch (error) {
-        console.error(error);
+        console.error('Erro ao atualizar status:', error);
         res.status(500).json({ message: 'Erro ao atualizar status' });
+    }
+});
+
+app.get('/api/tasks/fixed/history', authenticateToken, async (req, res) => {
+    try {
+        const { start, end } = req.query;
+        
+        const history = await db.all(`
+            SELECT t.name as task_name, 
+                   e.name as employee_name,
+                   fts.date,
+                   fts.status
+            FROM fixed_task_status fts
+            JOIN tasks t ON fts.task_id = t.id
+            JOIN employees e ON t.employee_id = e.id
+            WHERE fts.date BETWEEN ? AND ?
+            ORDER BY fts.date DESC, t.name
+        `, [start, end]);
+
+        res.json(history);
+    } catch (error) {
+        console.error('Erro ao buscar histórico:', error);
+        res.status(500).json({ message: 'Erro ao buscar histórico' });
     }
 });
 
@@ -440,24 +640,54 @@ app.post('/api/tasks/fixed', authenticateToken, async (req, res) => {
 // Rotas para folgas
 app.get('/api/leaves', authenticateToken, async (req, res) => {
     try {
-        const leaves = await db.all(`
+        const { month, year, employeeId } = req.query;
+        let query = `
             SELECT l.*, e.name as employee_name 
             FROM leaves l
             JOIN employees e ON l.employee_id = e.id
-        `);
+            WHERE 1=1
+        `;
+        const params = [];
+
+        if (month && year) {
+            query += ` AND strftime('%Y-%m', l.date) = ?`;
+            params.push(`${year}-${month.padStart(2, '0')}`);
+        }
+
+        if (employeeId) {
+            query += ` AND l.employee_id = ?`;
+            params.push(employeeId);
+        }
+
+        const leaves = await db.all(query, params);
         res.json(leaves);
     } catch (error) {
-        console.error(error);
+        console.error('Erro ao buscar folgas:', error);
         res.status(500).json({ message: 'Erro ao buscar folgas' });
     }
 });
 
+
 app.delete('/api/leaves/:id', authenticateToken, async (req, res) => {
     try {
-        await db.run('DELETE FROM leaves WHERE id = ?', [req.params.id]);
+        const { id } = req.params;
+        
+        // Verificar se a folga existe
+        const leave = await db.get('SELECT * FROM leaves WHERE id = ?', [id]);
+        if (!leave) {
+            return res.status(404).json({ message: 'Folga não encontrada' });
+        }
+
+        // Apenas admin pode remover folgas
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ message: 'Permissão negada' });
+        }
+
+        await db.run('DELETE FROM leaves WHERE id = ?', [id]);
+        
         res.json({ message: 'Folga removida com sucesso' });
     } catch (error) {
-        console.error(error);
+        console.error('Erro ao remover folga:', error);
         res.status(500).json({ message: 'Erro ao remover folga' });
     }
 });
@@ -486,48 +716,104 @@ app.get('/api/reports', authenticateToken, async (req, res) => {
                 endDate.setMonth(endDate.getMonth() + 1);
                 endDate.setDate(endDate.getDate() - 1);
                 break;
+            default:
+                return res.status(400).json({ message: 'Tipo de relatório inválido' });
         }
 
-        // Buscar dados para o relatório
-        const tasks = await db.all(`
-            SELECT t.*, e.name as employee_name
+        // Construir a query base de acordo com as permissões
+        const baseTaskQuery = req.user.isAdmin ? `
+            SELECT t.*, e.name as employee_name, u.username
             FROM tasks t
             JOIN employees e ON t.employee_id = e.id
+            LEFT JOIN users u ON e.id = u.employee_id
             WHERE t.date BETWEEN ? AND ?
-        `, [startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0]]);
+        ` : `
+            SELECT t.*, e.name as employee_name, u.username
+            FROM tasks t
+            JOIN employees e ON t.employee_id = e.id
+            LEFT JOIN users u ON e.id = u.employee_id
+            WHERE t.date BETWEEN ? AND ?
+            AND t.employee_id = ?
+        `;
 
-        const leaves = await db.all(`
+        // Parâmetros da query
+        const queryParams = req.user.isAdmin ? 
+            [startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0]] :
+            [startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0], req.user.employeeId];
+
+        // Buscar tarefas
+        const tasks = await db.all(baseTaskQuery, queryParams);
+
+        // Buscar folgas para o período
+        const leavesQuery = req.user.isAdmin ? `
             SELECT l.*, e.name as employee_name
             FROM leaves l
             JOIN employees e ON l.employee_id = e.id
             WHERE l.date BETWEEN ? AND ?
-        `, [startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0]]);
+        ` : `
+            SELECT l.*, e.name as employee_name
+            FROM leaves l
+            JOIN employees e ON l.employee_id = e.id
+            WHERE l.date BETWEEN ? AND ?
+            AND l.employee_id = ?
+        `;
+
+        const leaves = await db.all(leavesQuery, queryParams);
 
         // Processar estatísticas
         const employeeStats = {};
         const taskStats = {};
+        const totalDays = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
 
+        // Inicializar estatísticas por funcionário
         tasks.forEach(task => {
-            // Estatísticas por funcionário
             if (!employeeStats[task.employee_id]) {
                 employeeStats[task.employee_id] = {
+                    employeeId: task.employee_id,
                     employeeName: task.employee_name,
+                    username: task.username,
+                    tasksTotal: 0,
                     tasksCompleted: 0,
+                    tasksPending: 0,
+                    tasksInProgress: 0,
                     leaves: 0,
-                    completionRate: 0
+                    completionRate: 0,
+                    avgTasksPerDay: 0
                 };
             }
-            employeeStats[task.employee_id].tasksCompleted++;
+
+            employeeStats[task.employee_id].tasksTotal++;
+            
+            switch (task.status) {
+                case 'concluido':
+                    employeeStats[task.employee_id].tasksCompleted++;
+                    break;
+                case 'pendente':
+                    employeeStats[task.employee_id].tasksPending++;
+                    break;
+                case 'em-andamento':
+                    employeeStats[task.employee_id].tasksInProgress++;
+                    break;
+            }
 
             // Estatísticas por tarefa
             if (!taskStats[task.name]) {
                 taskStats[task.name] = {
                     taskName: task.name,
                     frequency: 0,
-                    employees: new Set()
+                    completionRate: 0,
+                    totalAssigned: 0,
+                    completedCount: 0,
+                    employees: new Set(),
+                    isFixed: task.is_fixed
                 };
             }
+
             taskStats[task.name].frequency++;
+            taskStats[task.name].totalAssigned++;
+            if (task.status === 'concluido') {
+                taskStats[task.name].completedCount++;
+            }
             taskStats[task.name].employees.add(task.employee_name);
         });
 
@@ -538,23 +824,48 @@ app.get('/api/reports', authenticateToken, async (req, res) => {
             }
         });
 
-        // Calcular taxas de conclusão
+        // Calcular taxas finais e médias
         Object.values(employeeStats).forEach(stat => {
-            const workDays = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
-            stat.completionRate = ((stat.tasksCompleted / (workDays - stat.leaves)) * 100).toFixed(1);
+            // Dias úteis = total de dias - folgas
+            const workDays = totalDays - stat.leaves;
+            
+            // Taxa de conclusão baseada apenas nas tarefas atribuídas
+            stat.completionRate = stat.tasksTotal > 0 ?
+                ((stat.tasksCompleted / stat.tasksTotal) * 100).toFixed(1) : '0.0';
+            
+            // Média de tarefas por dia útil
+            stat.avgTasksPerDay = workDays > 0 ?
+                (stat.tasksTotal / workDays).toFixed(1) : '0.0';
         });
 
-        res.json({
-            startDate: startDate.toISOString().split('T')[0],
-            endDate: endDate.toISOString().split('T')[0],
-            employeeStats: Object.values(employeeStats),
-            taskStats: Object.values(taskStats).map(stat => ({
-                ...stat,
-                employees: Array.from(stat.employees)
-            }))
+        // Calcular taxas de conclusão por tarefa
+        Object.values(taskStats).forEach(stat => {
+            stat.completionRate = stat.totalAssigned > 0 ?
+                ((stat.completedCount / stat.totalAssigned) * 100).toFixed(1) : '0.0';
+            stat.employees = Array.from(stat.employees);
         });
+
+        // Preparar resposta
+        const response = {
+            period: {
+                start: startDate.toISOString().split('T')[0],
+                end: endDate.toISOString().split('T')[0],
+                totalDays: totalDays
+            },
+            summary: {
+                totalTasks: tasks.length,
+                totalCompleted: tasks.filter(t => t.status === 'concluido').length,
+                totalPending: tasks.filter(t => t.status === 'pendente').length,
+                totalInProgress: tasks.filter(t => t.status === 'em-andamento').length,
+                totalLeaves: leaves.length
+            },
+            employeeStats: Object.values(employeeStats),
+            taskStats: Object.values(taskStats)
+        };
+
+        res.json(response);
     } catch (error) {
-        console.error(error);
+        console.error('Erro ao gerar relatório:', error);
         res.status(500).json({ message: 'Erro ao gerar relatório' });
     }
 });

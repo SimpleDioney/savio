@@ -30,6 +30,24 @@
             min-height: 100vh;
         }
 
+        .greeting {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #333;
+    margin-right: 20px;
+}
+
+.admin-only {
+    display: none;
+}
+
+.date-input, .status-select {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-left: 10px;
+}
+
         .header {
             background-color: var(--bg-secondary);
             padding: 1rem 2rem;
@@ -366,6 +384,96 @@
                 margin: 5% 1rem;
             }
         }
+        .main-user-container {
+        transition: all 0.3s ease;
+    }
+
+    .main-user-container:hover {
+        transform: translateY(-2px);
+    }
+
+    .current-user-badge {
+        background: var(--accent);
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.8em;
+        margin-left: 8px;
+    }
+
+    .employee-card {
+        background: var(--bg-secondary);
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+
+    .employee-card.current-user {
+        background: linear-gradient(
+            to right,
+            var(--bg-secondary),
+            var(--bg-secondary)
+        );
+    }
+
+    .employee-header {
+        padding: 1rem;
+        background: rgba(0, 0, 0, 0.2);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .employee-name {
+        font-size: 1.2em;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+    }
+
+    .employee-task-count {
+        font-size: 0.9em;
+        color: var(--text-secondary);
+    }
+
+    .tasks-container {
+        padding: 1rem;
+    }
+
+    .task-item {
+        background: var(--bg-primary);
+        padding: 1rem;
+        border-radius: 4px;
+        margin-bottom: 0.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .task-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .employee-status {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.9em;
+    }
+
+    .status-available {
+        background: var(--success);
+        color: white;
+    }
+
+    .status-leave {
+        background: var(--warning);
+        color: var(--bg-primary);
+    }
+
+    .task-controls select:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
     </style>
 </head>
 <body>
@@ -478,7 +586,7 @@
         let employees = [];
         let tasks = [];
         let selectedDate = new Date().toISOString().split('T')[0];
-
+        
         // Funções de utilidade
         function updateDateTime() {
             const now = new Date();
@@ -513,24 +621,57 @@
 
         // Inicialização
         async function init() {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                window.location.href = '/login.html';
-                return;
-            }
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = '/login.html';
+        return;
+    }
 
-            document.getElementById('filterDate').value = selectedDate;
-            await loadEmployees();
+    try {
+        // Decodificar token e configurar usuário atual
+        currentUser = JSON.parse(atob(token.split('.')[1]));
+        
+        // Configurar elementos baseados nas permissões
+        configureUserInterface();
+        
+        // Configurar saudação
+        updateGreeting();
+
+        document.getElementById('filterDate').value = selectedDate;
+        await loadEmployees();
+        await loadTasks();
+        updateStatistics();
+
+        setInterval(async () => {
             await loadTasks();
             updateStatistics();
+        }, 120000);
+    } catch (error) {
+        console.error('Erro na inicialização:', error);
+        logout();
+    }
+}
 
-            // Atualizar a cada 2 minutos
-            setInterval(async () => {
-                await loadTasks();
-                updateStatistics();
-            }, 120000);
-        }
+// Adicionar função para atualizar a saudação
+function updateGreeting() {
+    const greetingEl = document.getElementById('greeting');
+    if (greetingEl && currentUser) {
+        const hour = new Date().getHours();
+        let greeting = '';
+        if (hour < 12) greeting = 'Bom dia';
+        else if (hour < 18) greeting = 'Boa tarde';
+        else greeting = 'Boa noite';
+        greetingEl.textContent = `${greeting}, ${currentUser.employeeName}!`;
+    }
+}
 
+// Adicionar função para configurar interface baseada no usuário
+function configureUserInterface() {
+    const adminElements = document.querySelectorAll('.admin-only');
+    adminElements.forEach(el => {
+        el.style.display = currentUser.isAdmin ? 'block' : 'none';
+    });
+}
         // Carregar funcionários disponíveis
         async function loadEmployees() {
             try {
@@ -553,29 +694,31 @@
 
         // Carregar tarefas
         async function loadTasks() {
-            try {
-                const statusFilter = document.getElementById('filterStatus').value;
-                let url = `/api/tasks?date=${selectedDate}`;
-                if (statusFilter) {
-                    url += `&status=${statusFilter}`;
-                }
+    try {
+        const statusFilter = document.getElementById('filterStatus').value;
+        const dateFilter = document.getElementById('filterDate').value;
 
-                const response = await fetch(url, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
-
-                if (!response.ok) throw new Error('Erro ao carregar tarefas');
-
-                tasks = await response.json();
-                renderTaskGrid();
-            } catch (error) {
-                console.error('Erro ao carregar tarefas:', error);
-                showNotification('Erro ao carregar tarefas', 'error');
-            }
+        let url = `/api/tasks?date=${dateFilter}`;
+        if (statusFilter && statusFilter !== 'all') {
+            url += `&status=${statusFilter}`;
         }
 
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+
+        if (!response.ok) throw new Error('Erro ao carregar tarefas');
+
+        tasks = await response.json();
+        renderTaskGrid();
+        updateStatistics();
+    } catch (error) {
+        console.error('Erro ao carregar tarefas:', error);
+        showNotification('Erro ao carregar tarefas', 'error');
+    }
+}
         // Atualizar select de funcionários
         function updateEmployeeSelect() {
             const select = document.getElementById('assignedTo');
@@ -594,112 +737,167 @@
 
         // Renderizar grid de tarefas
         function renderTaskGrid() {
-            const grid = document.getElementById('taskGrid');
-            grid.innerHTML = '';
+    const grid = document.getElementById('taskGrid');
+    grid.innerHTML = '';
 
-            // Agrupar tarefas por funcionário
-            const tasksByEmployee = new Map();
-            employees.forEach(emp => {
-                tasksByEmployee.set(emp.id, []);
-            });
+    const tasksByEmployee = new Map();
+    employees.forEach(emp => {
+        tasksByEmployee.set(emp.id, []);
+    });
 
-            tasks.forEach(task => {
-                if (task.employee_id && tasksByEmployee.has(task.employee_id)) {
-                    tasksByEmployee.get(task.employee_id).push(task);
-                }
-            });
-
-            // Criar card para cada funcionário
-            employees.forEach(emp => {
-                const employeeTasks = tasksByEmployee.get(emp.id) || [];
-                const card = document.createElement('div');
-                card.className = 'employee-card';
-
-                const completedTasks = employeeTasks.filter(t => t.status === 'concluido').length;
-                const totalTasks = employeeTasks.length;
-                const completionRate = totalTasks ? ((completedTasks / totalTasks) * 100).toFixed(0) : 0;
-
-                card.innerHTML = `
-                    <div class="employee-header">
-                        <div class="employee-info">
-                            <div class="employee-name">${emp.name}</div>
-                            <div class="employee-task-count">
-                                ${totalTasks} tarefas • ${completionRate}% concluído
-                            </div>
-                        </div>
-                        <span class="employee-status ${emp.on_leave ? 'status-leave' : 'status-available'}">
-                            ${emp.on_leave ? 'De Folga' : 'Disponível'}
-                        </span>
-                    </div>
-                    <div class="tasks-container">
-                        ${employeeTasks.length === 0 ? `
-                            <div class="no-tasks">Sem tarefas atribuídas</div>
-                        ` : employeeTasks.map(task => `
-                            <div class="task-item ${task.is_fixed ? 'fixed' : ''} ${task.status === 'concluido' ? 'completed' : ''}"
-                                 data-task-id="${task.id}">
-                                <div class="task-info">
-                                    <span class="task-priority priority-${task.priority}"></span>
-                                    <div>
-                                        <div class="task-name">${task.name}</div>
-                                        ${task.description ? `
-                                            <div class="task-description">${task.description}</div>
-                                        ` : ''}
-                                        ${task.is_fixed ? '<span class="task-fixed-badge">Fixa</span>' : ''}
-                                    </div>
-                                </div>
-                                <div class="task-controls">
-                                    <select class="task-status status-${task.status}"
-                                            onchange="updateTaskStatus(${task.id}, this.value)"
-                                            ${emp.on_leave ? 'disabled' : ''}>
-                                        <option value="pendente" ${task.status === 'pendente' ? 'selected' : ''}>
-                                            Pendente
-                                        </option>
-                                        <option value="em_andamento" ${task.status === 'em_andamento' ? 'selected' : ''}>
-                                            Em Andamento
-                                        </option>
-                                        <option value="concluido" ${task.status === 'concluido' ? 'selected' : ''}>
-                                            Concluído
-                                        </option>
-                                    </select>
-                                    ${!task.is_fixed && !emp.on_leave ? `
-                                        <button class="btn btn-danger btn-small" 
-                                                onclick="deleteTask(${task.id})"
-                                                title="Remover Tarefa">
-                                            ×
-                                        </button>
-                                    ` : ''}
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-
-                grid.appendChild(card);
-            });
+    tasks.forEach(task => {
+        if (task.employee_id && tasksByEmployee.has(task.employee_id)) {
+            tasksByEmployee.get(task.employee_id).push(task);
         }
+    });
+
+    // Primeiro, renderizar o card do usuário atual
+    const currentEmployee = employees.find(emp => emp.id === currentUser.employeeId);
+    if (currentEmployee) {
+        const currentUserTasks = tasksByEmployee.get(currentUser.employeeId) || [];
+        const currentUserCard = createEmployeeCard(currentEmployee, currentUserTasks, true);
+        grid.appendChild(currentUserCard);
+    }
+
+    // Depois, renderizar os cards dos outros funcionários
+    employees.forEach(emp => {
+        if (emp.id !== currentUser.employeeId) {
+            const employeeTasks = tasksByEmployee.get(emp.id) || [];
+            const card = createEmployeeCard(emp, employeeTasks, false);
+            grid.appendChild(card);
+        }
+    });
+}
+
+// Adicionar função para criar card de funcionário
+function createEmployeeCard(emp, employeeTasks, isCurrentUser) {
+    const card = document.createElement('div');
+    card.className = `employee-card ${isCurrentUser ? 'current-user' : ''}`;
+    
+    if (isCurrentUser) {
+        card.style.border = '2px solid var(--accent)';
+    }
+
+    const completedTasks = employeeTasks.filter(t => t.status === 'concluido').length;
+    const totalTasks = employeeTasks.length;
+    const completionRate = totalTasks ? ((completedTasks / totalTasks) * 100).toFixed(0) : 0;
+
+    // Verificar se o usuário pode editar (admin ou próprio usuário)
+    const canEdit = currentUser.isAdmin || isCurrentUser;
+
+    card.innerHTML = `
+        <div class="employee-header">
+            <div class="employee-info">
+                <div class="employee-name">
+                    ${emp.name}
+                    ${isCurrentUser ? '<span class="current-user-badge">Você</span>' : ''}
+                </div>
+                <div class="employee-task-count">
+                    ${totalTasks} tarefas • ${completionRate}% concluído
+                </div>
+            </div>
+            <span class="employee-status ${emp.on_leave ? 'status-leave' : 'status-available'}">
+                ${emp.on_leave ? 'De Folga' : 'Disponível'}
+            </span>
+        </div>
+        <div class="tasks-container">
+            ${employeeTasks.length === 0 ? `
+                <div class="no-tasks">Sem tarefas atribuídas</div>
+            ` : employeeTasks.map(task => `
+                <div class="task-item ${task.is_fixed ? 'fixed' : ''} ${task.status === 'concluido' ? 'completed' : ''}"
+                     data-task-id="${task.id}">
+                    <div class="task-info">
+                        <span class="task-priority priority-${task.priority}"></span>
+                        <div>
+                            <div class="task-name">${task.name}</div>
+                            ${task.description ? `
+                                <div class="task-description">${task.description}</div>
+                            ` : ''}
+                            ${task.is_fixed ? '<span class="task-fixed-badge">Fixa</span>' : ''}
+                        </div>
+                    </div>
+                    <div class="task-controls">
+                        <select class="task-status status-${task.status}"
+                                onchange="updateTaskStatus(${task.id}, this.value)"
+                                ${!canEdit ? 'disabled' : ''}
+                                ${emp.on_leave ? 'disabled' : ''}>
+                            <option value="pendente" ${task.status === 'pendente' ? 'selected' : ''}>
+                                Pendente
+                            </option>
+                            <option value="em-andamento" ${task.status === 'em-andamento' ? 'selected' : ''}>
+                                Em Andamento
+                            </option>
+                            <option value="concluido" ${task.status === 'concluido' ? 'selected' : ''}>
+                                Concluído
+                            </option>
+                        </select>
+                        ${canEdit && !task.is_fixed && !emp.on_leave ? `
+                            <button class="btn btn-danger btn-small" 
+                                    onclick="deleteTask(${task.id})"
+                                    title="Remover Tarefa">
+                                ×
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    return card;
+}
 
         // Atualizar status da tarefa
         async function updateTaskStatus(taskId, status) {
-            try {
-                const response = await fetch(`/api/tasks/${taskId}/status`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    },
-                    body: JSON.stringify({ status })
-                });
+    try {
+        const task = tasks.find(t => t.id === taskId);
+        if (!task) throw new Error('Tarefa não encontrada');
 
-                if (!response.ok) throw new Error('Erro ao atualizar status');
-
-                await loadTasks();
-                updateStatistics();
-                showNotification('Status atualizado com sucesso', 'success');
-            } catch (error) {
-                console.error('Erro ao atualizar status:', error);
-                showNotification('Erro ao atualizar status', 'error');
-            }
+        const canEdit = currentUser.isAdmin || task.employee_id === currentUser.employeeId;
+        if (!canEdit) {
+            throw new Error('Você não tem permissão para atualizar esta tarefa');
         }
+
+        const response = await fetch(`/api/tasks/${taskId}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({ 
+                status,
+                date: document.getElementById('filterDate').value 
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Erro ao atualizar status');
+        }
+
+        await loadTasks();
+        showNotification('Status atualizado com sucesso', 'success');
+    } catch (error) {
+        console.error('Erro ao atualizar status:', error);
+        showNotification(error.message, 'error');
+    }
+}
+
+async function getFixedTasksHistory(startDate, endDate) {
+    try {
+        const response = await fetch(`/api/tasks/fixed/history?start=${startDate}&end=${endDate}`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+
+        if (!response.ok) throw new Error('Erro ao buscar histórico');
+        return await response.json();
+    } catch (error) {
+        console.error('Erro ao buscar histórico:', error);
+        return [];
+    }
+}
 
         // Distribuir tarefas automaticamente
         async function distributeTasksAutomatically() {
@@ -772,26 +970,34 @@
 
         // Excluir tarefa
         async function deleteTask(taskId) {
-            if (!confirm('Tem certeza que deseja excluir esta tarefa?')) return;
+    try {
+        const task = tasks.find(t => t.id === taskId);
+        if (!task) throw new Error('Tarefa não encontrada');
 
-            try {
-                const response = await fetch(`/api/tasks/${taskId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
-
-                if (!response.ok) throw new Error('Erro ao excluir tarefa');
-
-                await loadTasks();
-                updateStatistics();
-                showNotification('Tarefa excluída com sucesso', 'success');
-            } catch (error) {
-                console.error('Erro ao excluir tarefa:', error);
-                showNotification('Erro ao excluir tarefa', 'error');
-            }
+        const canDelete = currentUser.isAdmin || task.employee_id === currentUser.employeeId;
+        
+        if (!canDelete) {
+            throw new Error('Você não tem permissão para excluir esta tarefa');
         }
+
+        if (!confirm('Tem certeza que deseja excluir esta tarefa?')) return;
+
+        const response = await fetch(`/api/tasks/${taskId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+
+        if (!response.ok) throw new Error('Erro ao excluir tarefa');
+
+        await loadTasks();
+        showNotification('Tarefa excluída com sucesso', 'success');
+    } catch (error) {
+        console.error('Erro ao excluir tarefa:', error);
+        showNotification(error.message, 'error');
+    }
+}
 
         // Atualizar estatísticas
         function updateStatistics() {
