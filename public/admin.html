@@ -94,6 +94,68 @@
         border-radius: 4px;
       }
 
+      .employee-card {
+            background-color: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .employee-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .employee-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .employee-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .employee-schedule {
+            display: flex;
+            gap: 1rem;
+            padding: 0.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .schedule-time {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .schedule-icon {
+            font-size: 1.1rem;
+        }
+
+        .employee-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+        }
+
+        .status-working {
+            background-color: var(--success);
+        }
+
+        .status-off {
+            background-color: var(--danger);
+        }
+
       .grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -471,6 +533,14 @@
                             <label for="password">Senha</label>
                             <input type="password" id="password" required>
                         </div>
+                        <div class="form-group">
+                            <label for="workStart">Horário de Entrada</label>
+                            <input type="time" id="workStart" required value="09:00">
+                        </div>
+                        <div class="form-group">
+                            <label for="workEnd">Horário de Saída</label>
+                            <input type="time" id="workEnd" required value="18:00">
+                        </div>
                         <button type="submit" class="btn btn-success">Adicionar Funcionário</button>
                     </form>
                 </div>
@@ -616,22 +686,41 @@
 
         // Atualizar lista de funcionários
         function updateEmployeesList() {
-            const list = document.getElementById('employeesList');
-            list.innerHTML = employees.map(emp => `
-                <div class="employee-card">
-                    <div class="employee-info">
-                        <div class="employee-name">${emp.name}</div>
+        const list = document.getElementById('employeesList');
+        list.innerHTML = employees.map(emp => `
+            <div class="employee-card">
+                <div class="employee-info">
+                    <div class="employee-name">${emp.name}</div>
+                    <div class="employee-details">
+                        <div>Usuário: ${emp.username}</div>
+                        <div>${emp.active ? 'Ativo' : 'Inativo'}</div>
                     </div>
-                    <div class="employee-stats">
-                        <div>Status: ${emp.active ? 'Ativo' : 'Inativo'}</div>
-                        <div>Hoje: ${emp.on_leave ? 'De folga' : 'Disponível'}</div>
+                    <div class="employee-schedule">
+                        <div class="schedule-time">
+                            <span class="schedule-icon">🕒</span>
+                            <span>Entrada: ${emp.work_start}</span>
+                        </div>
+                        <div class="schedule-time">
+                            <span class="schedule-icon">🏁</span>
+                            <span>Saída: ${emp.work_end}</span>
+                        </div>
                     </div>
+                    <div class="employee-status ${emp.is_working ? 'status-working' : 'status-off'}">
+                        <span class="status-icon">${emp.is_working ? '🟢' : '🔴'}</span>
+                        <span>${emp.is_working ? 'Em expediente' : 'Fora de expediente'}</span>
+                    </div>
+                </div>
+                <div class="employee-actions">
+                    <button class="btn btn-primary" onclick="editEmployee(${emp.id})">
+                        Editar
+                    </button>
                     <button class="btn btn-danger" onclick="deleteEmployee(${emp.id})">
                         Remover
                     </button>
                 </div>
-            `).join('');
-        }
+            </div>
+        `).join('');
+    }
 
         // Atualizar selects de funcionários
         function updateEmployeeSelects() {
@@ -652,35 +741,85 @@
 
         // Adicionar funcionário
         async function addEmployee(event) {
-            event.preventDefault();
-            
-            const name = document.getElementById('employeeName').value;
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
+        event.preventDefault();
+        
+        const name = document.getElementById('employeeName').value;
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const workStart = document.getElementById('workStart').value;
+        const workEnd = document.getElementById('workEnd').value;
 
-            try {
-                const response = await fetch('/api/employees', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    },
-                    body: JSON.stringify({ name, username, password })
-                });
+        try {
+            const response = await fetch('/api/employees', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ 
+                    name, 
+                    username, 
+                    password,
+                    workStart,
+                    workEnd
+                })
+            });
 
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.message || 'Erro ao criar funcionário');
-                }
-
-                showNotification('Funcionário adicionado com sucesso', 'success');
-                event.target.reset();
-                await loadEmployees();
-            } catch (error) {
-                console.error('Erro ao adicionar funcionário:', error);
-                showNotification(error.message, 'error');
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Erro ao criar funcionário');
             }
+
+            showNotification('Funcionário adicionado com sucesso', 'success');
+            event.target.reset();
+            await loadEmployees();
+        } catch (error) {
+            console.error('Erro ao adicionar funcionário:', error);
+            showNotification(error.message, 'error');
         }
+    }
+
+    async function editEmployee(id) {
+        try {
+            const employee = employees.find(emp => emp.id === id);
+            if (!employee) return;
+
+            const newName = prompt('Novo nome:', employee.name);
+            const newWorkStart = prompt('Novo horário de entrada (HH:MM):', employee.work_start);
+            const newWorkEnd = prompt('Novo horário de saída (HH:MM):', employee.work_end);
+            const newPassword = prompt('Nova senha (deixe em branco para manter a atual):');
+
+            if (!newName || !newWorkStart || !newWorkEnd) return;
+
+            const data = {
+                name: newName,
+                workStart: newWorkStart,
+                workEnd: newWorkEnd
+            };
+
+            if (newPassword) {
+                data.password = newPassword;
+            }
+
+            const response = await fetch(`/api/employees/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) throw new Error('Erro ao atualizar funcionário');
+
+            showNotification('Funcionário atualizado com sucesso', 'success');
+            await loadEmployees();
+        } catch (error) {
+            console.error('Erro ao editar funcionário:', error);
+            showNotification('Erro ao atualizar funcionário', 'error');
+        }
+    }
+
 
         // Remover funcionário
         async function deleteEmployee(id) {

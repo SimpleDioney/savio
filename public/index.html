@@ -180,6 +180,7 @@
         .employee-card {
             background: var(--bg-secondary);
             border-radius: 8px;
+            position: relative;
             overflow: hidden;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
@@ -198,10 +199,42 @@
         }
 
         .employee-status {
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-working {
+            background: var(--success);
+            color: white;
+        }
+
+        .status-off {
+            background: var(--danger);
+            color: white;
+        }
+
+        .status-leave {
+            background: var(--warning);
+            color: var(--bg-primary);
+        }
+
+        .work-schedule {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .employee-status-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .tasks-container {
@@ -686,10 +719,27 @@ function configureUserInterface() {
                 employees = await response.json();
                 updateEmployeeSelect();
                 renderTaskGrid();
+
+                // Atualizar status de trabalho a cada minuto
+                setInterval(checkWorkingStatus, 60000);
             } catch (error) {
                 console.error('Erro ao carregar funcionários:', error);
                 showNotification('Erro ao carregar funcionários', 'error');
             }
+        }
+
+        function checkWorkingStatus() {
+            const now = new Date();
+            const currentTime = now.getHours().toString().padStart(2, '0') + ':' + 
+                              now.getMinutes().toString().padStart(2, '0');
+
+            employees.forEach(emp => {
+                emp.is_working = currentTime >= emp.work_start && 
+                               currentTime <= emp.work_end && 
+                               !emp.on_leave;
+            });
+
+            renderTaskGrid();
         }
 
         // Carregar tarefas
@@ -722,16 +772,25 @@ function configureUserInterface() {
         // Atualizar select de funcionários
         function updateEmployeeSelect() {
             const select = document.getElementById('assignedTo');
-            select.innerHTML = `
-                <option value="">Distribuição Automática</option>
-                ${employees
-                    .filter(emp => !emp.on_leave)
-                    .map(emp => `
+            const now = new Date();
+            const currentTime = now.getHours().toString().padStart(2, '0') + ':' + 
+                              now.getMinutes().toString().padStart(2, '0');
+
+            select.innerHTML = '<option value="">Distribuição Automática</option>';
+            
+            employees
+                .filter(emp => 
+                    !emp.on_leave && 
+                    currentTime >= emp.work_start && 
+                    currentTime <= emp.work_end
+                )
+                .forEach(emp => {
+                    select.innerHTML += `
                         <option value="${emp.id}">
                             ${emp.name} (${emp.task_count || 0} tarefas)
                         </option>
-                    `).join('')}
-            `;
+                    `;
+                });
         }
         
 
@@ -771,81 +830,107 @@ function configureUserInterface() {
 
 // Adicionar função para criar card de funcionário
 function createEmployeeCard(emp, employeeTasks, isCurrentUser) {
-    const card = document.createElement('div');
-    card.className = `employee-card ${isCurrentUser ? 'current-user' : ''}`;
-    
-    if (isCurrentUser) {
-        card.style.border = '2px solid var(--accent)';
-    }
+            const card = document.createElement('div');
+            card.className = `employee-card ${isCurrentUser ? 'current-user' : ''}`;
+            
+            if (isCurrentUser) {
+                card.style.border = '2px solid var(--accent)';
+            }
 
-    const completedTasks = employeeTasks.filter(t => t.status === 'concluido').length;
-    const totalTasks = employeeTasks.length;
-    const completionRate = totalTasks ? ((completedTasks / totalTasks) * 100).toFixed(0) : 0;
+            const now = new Date();
+            const currentTime = now.getHours().toString().padStart(2, '0') + ':' + 
+                              now.getMinutes().toString().padStart(2, '0');
+            const isWithinWorkHours = currentTime >= emp.work_start && 
+                                    currentTime <= emp.work_end;
 
-    // Verificar se o usuário pode editar (admin ou próprio usuário)
-    const canEdit = currentUser.isAdmin || isCurrentUser;
+            const completedTasks = employeeTasks.filter(t => t.status === 'concluido').length;
+            const totalTasks = employeeTasks.length;
+            const completionRate = totalTasks ? 
+                ((completedTasks / totalTasks) * 100).toFixed(0) : 0;
 
-    card.innerHTML = `
-        <div class="employee-header">
-            <div class="employee-info">
-                <div class="employee-name">
-                    ${emp.name}
-                    ${isCurrentUser ? '<span class="current-user-badge">Você</span>' : ''}
-                </div>
-                <div class="employee-task-count">
-                    ${totalTasks} tarefas • ${completionRate}% concluído
-                </div>
-            </div>
-            <span class="employee-status ${emp.on_leave ? 'status-leave' : 'status-available'}">
-                ${emp.on_leave ? 'De Folga' : 'Disponível'}
-            </span>
-        </div>
-        <div class="tasks-container">
-            ${employeeTasks.length === 0 ? `
-                <div class="no-tasks">Sem tarefas atribuídas</div>
-            ` : employeeTasks.map(task => `
-                <div class="task-item ${task.is_fixed ? 'fixed' : ''} ${task.status === 'concluido' ? 'completed' : ''}"
-                     data-task-id="${task.id}">
-                    <div class="task-info">
-                        <span class="task-priority priority-${task.priority}"></span>
-                        <div>
-                            <div class="task-name">${task.name}</div>
-                            ${task.description ? `
-                                <div class="task-description">${task.description}</div>
-                            ` : ''}
-                            ${task.is_fixed ? '<span class="task-fixed-badge">Fixa</span>' : ''}
+            // Determine employee status
+            let statusClass, statusText, statusIcon;
+            if (emp.on_leave) {
+                statusClass = 'status-leave';
+                statusText = 'De Folga';
+            } else if (!isWithinWorkHours) {
+                statusClass = 'status-off';
+                statusText = 'Fora de Expediente';
+            } else {
+                statusClass = 'status-working';
+                statusText = 'Disponível';
+            }
+
+            card.innerHTML = `
+                <div class="employee-header">
+                    <div class="employee-info">
+                        <div class="employee-name">
+                            ${emp.name}
+                            ${isCurrentUser ? '<span class="current-user-badge">Você</span>' : ''}
+                        </div>
+                        <div class="work-schedule">
+                            🕒 Horário: ${emp.work_start} - ${emp.work_end}
+                        </div>
+                        <div class="employee-task-count">
+                            ${totalTasks} tarefas • ${completionRate}% concluído
                         </div>
                     </div>
-                    <div class="task-controls">
-                        <select class="task-status status-${task.status}"
-                                onchange="updateTaskStatus(${task.id}, this.value)"
-                                ${!canEdit ? 'disabled' : ''}
-                                ${emp.on_leave ? 'disabled' : ''}>
-                            <option value="pendente" ${task.status === 'pendente' ? 'selected' : ''}>
-                                Pendente
-                            </option>
-                            <option value="em-andamento" ${task.status === 'em-andamento' ? 'selected' : ''}>
-                                Em Andamento
-                            </option>
-                            <option value="concluido" ${task.status === 'concluido' ? 'selected' : ''}>
-                                Concluído
-                            </option>
-                        </select>
-                        ${canEdit && !task.is_fixed && !emp.on_leave ? `
-                            <button class="btn btn-danger btn-small" 
-                                    onclick="deleteTask(${task.id})"
-                                    title="Remover Tarefa">
-                                ×
-                            </button>
-                        ` : ''}
-                    </div>
+                    <span class="employee-status ${statusClass}">
+                        ${statusText}
+                    </span>
                 </div>
-            `).join('')}
-        </div>
-    `;
+                <div class="tasks-container">
+                    ${employeeTasks.length === 0 ? 
+                        '<div class="no-tasks">Sem tarefas atribuídas</div>' : 
+                        employeeTasks.map(task => {
+                            const canEdit = (currentUser.isAdmin || isCurrentUser) && 
+                                          isWithinWorkHours && !emp.on_leave;
+                            
+                            return `
+                                <div class="task-item ${task.is_fixed ? 'fixed' : ''} 
+                                            ${task.status === 'concluido' ? 'completed' : ''}">
+                                    <div class="task-info">
+                                        <span class="task-priority priority-${task.priority}"></span>
+                                        <div>
+                                            <div class="task-name">${task.name}</div>
+                                            ${task.description ? 
+                                                `<div class="task-description">${task.description}</div>` : 
+                                                ''}
+                                            ${task.is_fixed ? 
+                                                '<span class="task-fixed-badge">Fixa</span>' : ''}
+                                        </div>
+                                    </div>
+                                    <div class="task-controls">
+                                        <select class="task-status status-${task.status}"
+                                                onchange="updateTaskStatus(${task.id}, this.value)"
+                                                ${!canEdit ? 'disabled' : ''}>
+                                            <option value="pendente" 
+                                                ${task.status === 'pendente' ? 'selected' : ''}>
+                                                Pendente
+                                            </option>
+                                            <option value="em-andamento" 
+                                                ${task.status === 'em-andamento' ? 'selected' : ''}>
+                                                Em Andamento
+                                            </option>
+                                            <option value="concluido" 
+                                                ${task.status === 'concluido' ? 'selected' : ''}>
+                                                Concluído
+                                            </option>
+                                        </select>
+                                        ${canEdit && !task.is_fixed ? `
+                                            <button class="btn btn-danger btn-small" 
+                                                    onclick="deleteTask(${task.id})"
+                                                    title="Remover Tarefa">×</button>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                </div>
+            `;
 
-    return card;
-}
+            return card;
+        }
 
         // Atualizar status da tarefa
         async function updateTaskStatus(taskId, status) {
@@ -901,6 +986,22 @@ async function getFixedTasksHistory(startDate, endDate) {
 
         // Distribuir tarefas automaticamente
         async function distributeTasksAutomatically() {
+            const now = new Date();
+            const currentTime = now.getHours().toString().padStart(2, '0') + ':' + 
+                              now.getMinutes().toString().padStart(2, '0');
+
+            // Check if there are employees within working hours
+            const availableEmployees = employees.filter(emp => 
+                currentTime >= emp.work_start && 
+                currentTime <= emp.work_end && 
+                !emp.on_leave
+            );
+
+            if (availableEmployees.length === 0) {
+                showNotification('Não há funcionários em horário de expediente disponíveis', 'warning');
+                return;
+            }
+
             try {
                 const response = await fetch('/api/tasks/distribute', {
                     method: 'POST',
@@ -922,6 +1023,7 @@ async function getFixedTasksHistory(startDate, endDate) {
                 showNotification(error.message, 'error');
             }
         }
+
 
         // Salvar nova tarefa
         async function saveTask() {
