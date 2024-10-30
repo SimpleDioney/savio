@@ -147,29 +147,19 @@ app.post('/api/login', async (req, res) => {
             username: user.username,
             isAdmin: user.is_admin,
             employeeId: user.employee_id,
-            employeeName: user.employee_name
+            employeeName: user.name || user.username // Fallback para username se name não existir
         }, JWT_SECRET);
-        
-        // Determinar saudação
-        const hour = new Date().getHours();
-        let greeting = 'Boa noite';
-        if (hour < 12) greeting = 'Bom dia';
-        else if (hour < 18) greeting = 'Boa tarde';
 
         res.json({ 
             token,
-            greeting,
             isAdmin: user.is_admin,
-            employeeName: user.employee_name 
+            employeeName: user.name || user.username
         });
     } catch (error) {
         console.error('Erro no login:', error);
-        res.status(500).json({ 
-            message: 'Erro ao realizar login' 
-        });
+        res.status(500).json({ message: 'Erro ao realizar login' });
     }
 });
-
 // Rotas para funcionários
 app.post('/api/employees', authenticateToken, async (req, res) => {
     try {
