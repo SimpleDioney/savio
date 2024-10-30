@@ -19,71 +19,69 @@ async function initializeDb() {
         driver: sqlite3.Database
     });
 
-    await db.exec(`
-        ALTER TABLE employees ADD COLUMN work_start TEXT DEFAULT '08:00';
-        ALTER TABLE employees ADD COLUMN work_end TEXT DEFAULT '16:20';
-
-
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            is_admin BOOLEAN DEFAULT FALSE,
-            employee_id INTEGER,
-            FOREIGN KEY (employee_id) REFERENCES employees (id)
-        );
-
-        CREATE TABLE IF NOT EXISTS employees (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            active BOOLEAN DEFAULT TRUE
-        );
-
-        CREATE TABLE IF NOT EXISTS tasks (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            employee_id INTEGER,
-            date TEXT,
-            is_fixed BOOLEAN DEFAULT FALSE,
-            status TEXT DEFAULT 'pendente',
-            priority INTEGER DEFAULT 1,
-            FOREIGN KEY (employee_id) REFERENCES employees (id)
-        );
-
-        CREATE TABLE IF NOT EXISTS leaves (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            employee_id INTEGER,
-            date TEXT,
-            type TEXT DEFAULT 'folga',
-            FOREIGN KEY (employee_id) REFERENCES employees (id)
-        );
-
-        CREATE TABLE IF NOT EXISTS task_history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            task_id INTEGER,
-            employee_id INTEGER,
-            date TEXT,
-            FOREIGN KEY (task_id) REFERENCES tasks (id),
-            FOREIGN KEY (employee_id) REFERENCES employees (id)
-        );
-
-        CREATE TABLE IF NOT EXISTS fixed_task_status (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            task_id INTEGER,
-            date TEXT,
-            status TEXT DEFAULT 'pendente',
-            FOREIGN KEY (task_id) REFERENCES tasks (id),
-            UNIQUE(task_id, date)
-        );
-        
-    `);
-
-    // Criar usuário admin padrão
+    // Primeiro, verificar se as colunas work_start e work_end existem
     try {
-        const adminExists = await db.get(
-            'SELECT id FROM users WHERE username = ?', 
-            ['admin']
-        );
+        const tableInfo = await db.all("PRAGMA table_info(employees)");
+        const hasWorkStart = tableInfo.some(col => col.name === 'work_start');
+        const hasWorkEnd = tableInfo.some(col => col.name === 'work_end');
+
+        // Criar tabelas base
+        await db.exec(`
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                is_admin BOOLEAN DEFAULT FALSE,
+                employee_id INTEGER,
+                FOREIGN KEY (employee_id) REFERENCES employees (id)
+            );
+
+            CREATE TABLE IF NOT EXISTS employees (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                active BOOLEAN DEFAULT TRUE
+            );
+
+            CREATE TABLE IF NOT EXISTS tasks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT,
+                description TEXT,
+                employee_id INTEGER,
+                date TEXT,
+                is_fixed BOOLEAN DEFAULT FALSE,
+                status TEXT DEFAULT 'pendente',
+                priority INTEGER DEFAULT 1,
+                FOREIGN KEY (employee_id) REFERENCES employees (id)
+            );
+
+            CREATE TABLE IF NOT EXISTS leaves (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                employee_id INTEGER,
+                date TEXT,
+                type TEXT DEFAULT 'folga',
+                FOREIGN KEY (employee_id) REFERENCES employees (id)
+            );
+
+            CREATE TABLE IF NOT EXISTS task_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                task_id INTEGER,
+                employee_id INTEGER,
+                date TEXT,
+                FOREIGN KEY (task_id) REFERENCES tasks (id),
+                FOREIGN KEY (employee_id) REFERENCES employees (id)
+            );
+        `);
+
+        // Adicionar colunas de horário apenas se não existirem
+        if (!hasWorkStart) {
+            await db.exec('ALTER TABLE employees ADD COLUMN work_start TEXT DEFAULT "08:00"');
+        }
+        if (!hasWorkEnd) {
+            await db.exec('ALTER TABLE employees ADD COLUMN work_end TEXT DEFAULT "16:20"');
+        }
+
+        // Criar usuário admin padrão se não existir
+        const adminExists = await db.get('SELECT id FROM users WHERE username = ?', ['admin']);
         
         if (!adminExists) {
             const hashedPassword = await bcrypt.hash('admin123', 10);
@@ -92,8 +90,10 @@ async function initializeDb() {
                 ['admin', hashedPassword, true]
             );
         }
+
     } catch (error) {
-        console.error('Erro ao criar usuário admin:', error);
+        console.error('Erro na inicialização do banco de dados:', error);
+        throw error;
     }
 }
 
@@ -391,24 +391,32 @@ app.put('/api/employees/:id', authenticateToken, async (req, res) => {
         await db.run('BEGIN TRANSACTION');
 
         try {
-            // Update employee basic info
+            // Atualizar informações básicas do funcionário
             await db.run(
                 'UPDATE employees SET name = ?, work_start = ?, work_end = ? WHERE id = ?',
-                [name, workStart, workEnd, id]
+                [name, workStart || '09:00', workEnd || '18:00', id]
             );
 
-            // Update user info if provided
-            if (username) {
-                const userUpdateQuery = password 
-                    ? 'UPDATE users SET username = ?, password = ? WHERE employee_id = ?'
-                    : 'UPDATE users SET username = ? WHERE employee_id = ?';
-                
+            // Se fornecido username ou password, atualizar usuário
+            if (username || password) {
+                let query = 'UPDATE users SET';
+                const params = [];
+
+                if (username) {
+                    query += ' username = ?';
+                    params.push(username);
+                }
+
                 if (password) {
                     const hashedPassword = await bcrypt.hash(password, 10);
-                    await db.run(userUpdateQuery, [username, hashedPassword, id]);
-                } else {
-                    await db.run(userUpdateQuery, [username, id]);
+                    query += username ? ', password = ?' : ' password = ?';
+                    params.push(hashedPassword);
                 }
+
+                query += ' WHERE employee_id = ?';
+                params.push(id);
+
+                await db.run(query, params);
             }
 
             await db.run('COMMIT');
