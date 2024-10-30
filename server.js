@@ -20,6 +20,10 @@ async function initializeDb() {
     });
 
     await db.exec(`
+        ALTER TABLE employees ADD COLUMN work_start TEXT DEFAULT '08:00';
+        ALTER TABLE employees ADD COLUMN work_end TEXT DEFAULT '16:20';
+
+
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
@@ -71,6 +75,7 @@ async function initializeDb() {
             FOREIGN KEY (task_id) REFERENCES tasks (id),
             UNIQUE(task_id, date)
         );
+        
     `);
 
     // Criar usuário admin padrão
@@ -265,7 +270,11 @@ app.get('/api/employees', authenticateToken, async (req, res) => {
                         AND l.date = date('now', 'localtime')
                     ) THEN 1 
                     ELSE 0 
-                END as on_leave
+                END as on_leave,
+                CASE
+                    WHEN time('now', 'localtime') BETWEEN time(e.work_start) AND time(e.work_end) THEN 1
+                    ELSE 0
+                END as is_working
             FROM employees e
             LEFT JOIN users u ON e.id = u.employee_id
             WHERE e.active = 1
@@ -275,11 +284,10 @@ app.get('/api/employees', authenticateToken, async (req, res) => {
         res.json(employees);
     } catch (error) {
         console.error('Erro ao buscar funcionários:', error);
-        res.status(500).json({ 
-            message: 'Erro ao buscar funcionários' 
-        });
+        res.status(500).json({ message: 'Erro ao buscar funcionários' });
     }
 });
+
 
 app.get('/api/users/check/:username', authenticateToken, async (req, res) => {
     try {
@@ -372,6 +380,74 @@ app.delete('/api/employees/:id', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('Erro ao excluir funcionário:', error);
         res.status(500).json({ message: 'Erro ao excluir funcionário' });
+    }
+});
+
+app.put('/api/employees/:id', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, username, password, workStart, workEnd } = req.body;
+
+        await db.run('BEGIN TRANSACTION');
+
+        try {
+            // Update employee basic info
+            await db.run(
+                'UPDATE employees SET name = ?, work_start = ?, work_end = ? WHERE id = ?',
+                [name, workStart, workEnd, id]
+            );
+
+            // Update user info if provided
+            if (username) {
+                const userUpdateQuery = password 
+                    ? 'UPDATE users SET username = ?, password = ? WHERE employee_id = ?'
+                    : 'UPDATE users SET username = ? WHERE employee_id = ?';
+                
+                if (password) {
+                    const hashedPassword = await bcrypt.hash(password, 10);
+                    await db.run(userUpdateQuery, [username, hashedPassword, id]);
+                } else {
+                    await db.run(userUpdateQuery, [username, id]);
+                }
+            }
+
+            await db.run('COMMIT');
+            res.json({ message: 'Funcionário atualizado com sucesso' });
+        } catch (error) {
+            await db.run('ROLLBACK');
+            throw error;
+        }
+    } catch (error) {
+        console.error('Erro ao atualizar funcionário:', error);
+        res.status(500).json({ message: 'Erro ao atualizar funcionário' });
+    }
+});
+
+app.get('/api/employees/:id/working-status', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const employee = await db.get(
+            'SELECT work_start, work_end FROM employees WHERE id = ?',
+            [id]
+        );
+
+        if (!employee) {
+            return res.status(404).json({ message: 'Funcionário não encontrado' });
+        }
+
+        const now = new Date();
+        const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        
+        const isWithinHours = currentTime >= employee.work_start && currentTime <= employee.work_end;
+
+        res.json({ 
+            isWorking: isWithinHours,
+            workStart: employee.work_start,
+            workEnd: employee.work_end
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Erro ao verificar status de trabalho' });
     }
 });
 
@@ -511,18 +587,22 @@ app.get('/api/tasks/fixed/history', authenticateToken, async (req, res) => {
 app.post('/api/tasks/distribute', authenticateToken, async (req, res) => {
     try {
         const today = new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
         
-        // Buscar funcionários disponíveis (sem folga)
+        // Buscar funcionários disponíveis (sem folga e dentro do horário de trabalho)
         const availableEmployees = await db.all(`
             SELECT e.* FROM employees e
-            WHERE e.active = 1 AND e.id NOT IN (
+            WHERE e.active = 1 
+            AND e.id NOT IN (
                 SELECT l.employee_id FROM leaves l
                 WHERE l.date = ? AND l.type = 'folga'
             )
-        `, [today]);
+            AND time(?) BETWEEN time(e.work_start) AND time(e.work_end)
+        `, [today, currentTime]);
 
         if (availableEmployees.length === 0) {
-            return res.status(400).json({ message: 'Não há funcionários disponíveis hoje' });
+            return res.status(400).json({ message: 'Não há funcionários disponíveis agora' });
         }
 
         // Buscar tarefas não fixas e não atribuídas
