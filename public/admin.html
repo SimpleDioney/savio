@@ -140,21 +140,67 @@
         }
 
         .employee-status {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.25rem 0.75rem;
-            border-radius: 12px;
-            font-size: 0.875rem;
-        }
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.9em;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin: 10px 0;
+    }
 
-        .status-working {
-            background-color: var(--success);
-        }
+    .status-working {
+        background: var(--success);
+        color: white;
+    }
 
-        .status-off {
-            background-color: var(--danger);
-        }
+    .status-off {
+        background: var(--danger);
+        color: white;
+    }
+
+    .status-leave {
+        background: var(--warning);
+        color: var(--bg-primary);
+    }
+
+    .work-schedule {
+        color: var(--text-secondary);
+        font-size: 0.9em;
+        margin-top: 4px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .employee-card {
+        background: var(--bg-secondary);
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+
+    .employee-info {
+        margin-bottom: 1rem;
+    }
+
+    .employee-name {
+        font-size: 1.2rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+
+    .employee-details {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .employee-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
 
       .grid {
         display: grid;
@@ -686,41 +732,72 @@
 
         // Atualizar lista de funcionários
         function updateEmployeesList() {
-        const list = document.getElementById('employeesList');
-        list.innerHTML = employees.map(emp => `
+    const list = document.getElementById('employeesList');
+    list.innerHTML = employees.map(emp => {
+        // Determinar status do funcionário
+        let statusClass, statusText, statusIcon;
+        if (emp.on_leave) {
+            statusClass = 'status-leave';
+            statusText = 'De Folga';
+            statusIcon = '🏖️';
+        } else if (!isWithinWorkHours(emp.work_start, emp.work_end)) {
+            statusClass = 'status-off';
+            statusText = 'Fora de Expediente';
+            statusIcon = '🔴';
+        } else {
+            statusClass = 'status-working';
+            statusText = 'Disponível';
+            statusIcon = '🟢';
+        }
+
+        return `
             <div class="employee-card">
                 <div class="employee-info">
                     <div class="employee-name">${emp.name}</div>
                     <div class="employee-details">
                         <div>Usuário: ${emp.username}</div>
-                        <div>${emp.active ? 'Ativo' : 'Inativo'}</div>
-                    </div>
-                    <div class="employee-schedule">
-                        <div class="schedule-time">
-                            <span class="schedule-icon">🕒</span>
-                            <span>Entrada: ${emp.work_start}</span>
+                        <div class="work-schedule">
+                            🕒 Horário: ${emp.work_start} - ${emp.work_end}
                         </div>
-                        <div class="schedule-time">
-                            <span class="schedule-icon">🏁</span>
-                            <span>Saída: ${emp.work_end}</span>
-                        </div>
-                    </div>
-                    <div class="employee-status ${emp.is_working ? 'status-working' : 'status-off'}">
-                        <span class="status-icon">${emp.is_working ? '🟢' : '🔴'}</span>
-                        <span>${emp.is_working ? 'Em expediente' : 'Fora de expediente'}</span>
                     </div>
                 </div>
+                <div class="employee-status ${statusClass}">
+                    ${statusIcon} ${statusText}
+                </div>
                 <div class="employee-actions">
-                    <button class="btn btn-primary" onclick="editEmployee(${emp.id})">
+                    <button onclick="editEmployee(${emp.id})" class="btn">
                         Editar
                     </button>
-                    <button class="btn btn-danger" onclick="deleteEmployee(${emp.id})">
+                    <button onclick="deleteEmployee(${emp.id})" class="btn btn-danger">
                         Remover
                     </button>
                 </div>
             </div>
-        `).join('');
-    }
+        `;
+    }).join('');
+}
+
+function isWithinWorkHours(workStart, workEnd) {
+    const now = new Date();
+    const currentTime = now.getHours() * 60 + now.getMinutes(); // Converter para minutos
+
+    // Converter horário de trabalho para minutos
+    const [startHour, startMinute] = workStart.split(':').map(Number);
+    const [endHour, endMinute] = workEnd.split(':').map(Number);
+    
+    const workStartMinutes = startHour * 60 + startMinute;
+    const workEndMinutes = endHour * 60 + endMinute;
+
+    return currentTime >= workStartMinutes && currentTime <= workEndMinutes;
+}
+
+// Adicionar verificação periódica de status
+function checkWorkingStatus() {
+    employees.forEach(emp => {
+        emp.is_working = isWithinWorkHours(emp.work_start, emp.work_end);
+    });
+    updateEmployeesList();
+}
 
         // Atualizar selects de funcionários
         function updateEmployeeSelects() {
