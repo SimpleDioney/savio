@@ -999,14 +999,6 @@ function createEmployeeCard(emp, employeeTasks, isCurrentUser) {
         // Atualizar status da tarefa
         async function updateTaskStatus(taskId, status) {
     try {
-        const task = tasks.find(t => t.id === taskId);
-        if (!task) throw new Error('Tarefa não encontrada');
-
-        const canEdit = currentUser.isAdmin || task.employee_id === currentUser.employeeId;
-        if (!canEdit) {
-            throw new Error('Você não tem permissão para atualizar esta tarefa');
-        }
-
         const response = await fetch(`/api/tasks/${taskId}/status`, {
             method: 'PATCH',
             headers: {

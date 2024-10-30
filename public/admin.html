@@ -791,12 +791,63 @@ function isWithinWorkHours(workStart, workEnd) {
     return currentTime >= workStartMinutes && currentTime <= workEndMinutes;
 }
 
+async function deleteTask(taskId) {
+    if (!confirm('Tem certeza que deseja excluir esta tarefa?')) return;
+
+    try {
+        const response = await fetch(`/api/tasks/${taskId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Beaurer ${localStorage.getItem('token')}`
+            }
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Erro ao excluir tarefa');
+        }
+
+        await loadTasks();
+        showNotification('Tarefa excluída com sucesso', 'success');
+    } catch (error) {
+        console.error('Erro ao excluir tarefa:', error);
+        showNotification(error.message, 'error');
+    }
+}
+
 // Adicionar verificação periódica de status
 function checkWorkingStatus() {
     employees.forEach(emp => {
         emp.is_working = isWithinWorkHours(emp.work_start, emp.work_end);
     });
     updateEmployeesList();
+}
+
+async function updateTaskStatus(taskId, status) {
+    try {
+        const response = await fetch(`/api/tasks/${taskId}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({ 
+                status,
+                date: document.getElementById('filterDate').value 
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Erro ao atualizar status');
+        }
+
+        await loadTasks();
+        showNotification('Status atualizado com sucesso', 'success');
+    } catch (error) {
+        console.error('Erro ao atualizar status:', error);
+        showNotification(error.message, 'error');
+    }
 }
 
         // Atualizar selects de funcionários
