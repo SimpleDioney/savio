@@ -798,7 +798,7 @@ async function deleteTask(taskId) {
         const response = await fetch(`/api/tasks/${taskId}`, {
             method: 'DELETE',
             headers: {
-                'Authorization': `Beaurer ${localStorage.getItem('token')}`
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
         });
 
@@ -807,10 +807,41 @@ async function deleteTask(taskId) {
             throw new Error(error.message || 'Erro ao excluir tarefa');
         }
 
-        await loadTasks();
+        // Se a exclusão foi bem sucedida, recarregar as listas
+        await Promise.all([
+            loadTasks(), // Recarrega tarefas normais
+            loadFixedTasks() // Recarrega tarefas fixas
+        ]);
+        
         showNotification('Tarefa excluída com sucesso', 'success');
     } catch (error) {
         console.error('Erro ao excluir tarefa:', error);
+        showNotification(error.message, 'error');
+    }
+}
+
+// Função específica para deletar tarefas fixas
+async function deleteFixedTask(taskId) {
+    if (!confirm('Tem certeza que deseja excluir esta tarefa fixa? Esta ação não pode ser desfeita.')) return;
+
+    try {
+        const response = await fetch(`/api/tasks/${taskId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Erro ao excluir tarefa fixa');
+        }
+
+        // Recarregar apenas a lista de tarefas fixas
+        await loadFixedTasks();
+        showNotification('Tarefa fixa excluída com sucesso', 'success');
+    } catch (error) {
+        console.error('Erro ao excluir tarefa fixa:', error);
         showNotification(error.message, 'error');
     }
 }
