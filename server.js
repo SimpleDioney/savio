@@ -512,10 +512,74 @@ app.post('/api/tasks', authenticateToken, async (req, res) => {
 
 app.delete('/api/tasks/:id', authenticateToken, async (req, res) => {
     try {
-        await db.run('DELETE FROM tasks WHERE id = ?', [req.params.id]);
+        const { id } = req.params;
+        
+        // Verificar se a tarefa existe
+        const task = await db.get('SELECT * FROM tasks WHERE id = ?', [id]);
+        if (!task) {
+            return res.status(404).json({ message: 'Tarefa não encontrada' });
+        }
+
+        // Se for admin, pode deletar qualquer tarefa (fixa ou não)
+        if (req.user.isAdmin) {
+            // Se for uma tarefa fixa, deletar também os status históricos
+            if (task.is_fixed) {
+                await db.run('BEGIN TRANSACTION');
+                try {
+                    // Deletar registros de status da tarefa fixa
+                    await db.run('DELETE FROM fixed_task_status WHERE task_id = ?', [id]);
+                    // Deletar registros do histórico
+                    await db.run('DELETE FROM task_history WHERE task_id = ?', [id]);
+                    // Deletar a tarefa
+                    await db.run('DELETE FROM tasks WHERE id = ?', [id]);
+                    await db.run('COMMIT');
+                } catch (error) {
+                    await db.run('ROLLBACK');
+                    throw error;
+                }
+            } else {
+                // Para tarefas não fixas, apenas deletar a tarefa
+                await db.run('DELETE FROM tasks WHERE id = ?', [id]);
+            }
+            
+            return res.json({ message: 'Tarefa excluída com sucesso' });
+        }
+
+        // Para não-admin, verificar se é uma tarefa fixa
+        if (task.is_fixed) {
+            return res.status(403).json({ 
+                message: 'Apenas administradores podem excluir tarefas fixas' 
+            });
+        }
+
+        // Para não-admin, verificar se é a própria tarefa e se está no horário
+        if (task.employee_id !== req.user.employeeId) {
+            return res.status(403).json({ 
+                message: 'Sem permissão para excluir esta tarefa' 
+            });
+        }
+
+        // Verificar horário de trabalho do funcionário
+        const employee = await db.get(
+            'SELECT work_start, work_end FROM employees WHERE id = ?',
+            [req.user.employeeId]
+        );
+
+        const now = new Date();
+        const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        
+        if (currentTime < employee.work_start || currentTime > employee.work_end) {
+            return res.status(403).json({ 
+                message: 'Você só pode excluir tarefas durante seu horário de trabalho' 
+            });
+        }
+
+        // Deletar a tarefa
+        await db.run('DELETE FROM tasks WHERE id = ?', [id]);
         res.json({ message: 'Tarefa excluída com sucesso' });
+
     } catch (error) {
-        console.error(error);
+        console.error('Erro ao excluir tarefa:', error);
         res.status(500).json({ message: 'Erro ao excluir tarefa' });
     }
 });
@@ -524,16 +588,18 @@ app.patch('/api/tasks/:id/status', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
         const { status, date } = req.body;
-        
-        // Verificar se a tarefa existe e se é fixa
+
+        // Verificar se a tarefa existe
         const task = await db.get('SELECT * FROM tasks WHERE id = ?', [id]);
         if (!task) {
             return res.status(404).json({ message: 'Tarefa não encontrada' });
         }
 
-        // Verificar permissões
+        // Permitir que admins atualizem qualquer tarefa e funcionários atualizem suas próprias tarefas
         if (!req.user.isAdmin && task.employee_id !== req.user.employeeId) {
-            return res.status(403).json({ message: 'Sem permissão para atualizar esta tarefa' });
+            return res.status(403).json({ 
+                message: 'Sem permissão para atualizar esta tarefa' 
+            });
         }
 
         if (task.is_fixed) {
@@ -547,7 +613,7 @@ app.patch('/api/tasks/:id/status', authenticateToken, async (req, res) => {
                 DO UPDATE SET status = ?
             `, [id, currentDate, status, status]);
         } else {
-            // Para tarefas normais, atualizar normalmente
+            // Para tarefas normais
             await db.run('UPDATE tasks SET status = ? WHERE id = ?', [status, id]);
         }
 
