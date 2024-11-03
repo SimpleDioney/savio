@@ -892,14 +892,6 @@ app.post('/api/tasks/distribute', authenticateToken, async (req, res) => {
             }
         }
 
-        // Verificar se a loja existe
-        const store = await db.get('SELECT id FROM stores WHERE id = ? AND active = 1', [store_id]);
-        if (!store) {
-            return res.status(404).json({
-                message: 'Loja não encontrada ou inativa'
-            });
-        }
-
         // Buscar funcionários disponíveis da loja
         const availableEmployees = await db.all(`
             SELECT e.* 
@@ -908,12 +900,31 @@ app.post('/api/tasks/distribute', authenticateToken, async (req, res) => {
             WHERE e.active = 1 
             AND e.store_id = ?
             AND l.id IS NULL
-            AND time(?) BETWEEN time(e.work_start) AND time(e.work_end)
+            AND ? BETWEEN e.work_start AND e.work_end
         `, [today, store_id, currentTime]);
 
+        console.log('Funcionários disponíveis:', availableEmployees); // Debug
+        console.log('Horário atual:', currentTime); // Debug
+
         if (availableEmployees.length === 0) {
+            // Buscar todos os funcionários da loja para debug
+            const allEmployees = await db.all(`
+                SELECT e.*, 
+                       l.id as leave_id,
+                       time(?) BETWEEN time(e.work_start) AND time(e.work_end) as is_working_hours
+                FROM employees e
+                LEFT JOIN leaves l ON e.id = l.employee_id AND l.date = ?
+                WHERE e.active = 1 AND e.store_id = ?
+            `, [currentTime, today, store_id]);
+            
+            console.log('Todos os funcionários da loja:', allEmployees); // Debug
+
             return res.status(400).json({
-                message: 'Não há funcionários disponíveis agora'
+                message: 'Não há funcionários disponíveis agora',
+                debug: {
+                    currentTime,
+                    allEmployees
+                }
             });
         }
 
@@ -948,6 +959,9 @@ app.post('/api/tasks/distribute', authenticateToken, async (req, res) => {
                 `, [emp.id]);
                 taskHistory.set(emp.id, history);
             }
+
+            // Array para armazenar distribuições feitas
+            const distributions = [];
 
             // Distribuir tarefas
             for (let task of tasks) {
@@ -985,13 +999,22 @@ app.post('/api/tasks/distribute', authenticateToken, async (req, res) => {
                         'INSERT INTO task_history (task_id, employee_id, date) VALUES (?, ?, ?)',
                         [task.id, bestEmployee.id, today]
                     );
+
+                    distributions.push({
+                        taskId: task.id,
+                        employeeId: bestEmployee.id,
+                        employeeName: bestEmployee.name,
+                        taskName: task.name
+                    });
                 }
             }
 
             await db.run('COMMIT');
+
             res.json({
                 message: 'Tarefas distribuídas com sucesso',
-                tasksDistributed: tasks.length
+                tasksDistributed: distributions.length,
+                distributions: distributions
             });
 
         } catch (error) {
