@@ -1406,14 +1406,10 @@ async function getFixedTasksHistory(startDate, endDate) {
         let storeId;
         
         if (currentUser.isAdmin) {
-            // Para admin, mostrar modal de seleção de loja
             const selectedStore = await showStoreSelectionModal();
-            if (!selectedStore) {
-                return; // Usuário cancelou a seleção
-            }
+            if (!selectedStore) return;
             storeId = selectedStore;
         } else {
-            // Para usuário normal, usar sua própria loja
             const currentEmployee = employees.find(emp => emp.id === currentUser.employeeId);
             storeId = currentEmployee?.store_id;
         }
@@ -1430,14 +1426,17 @@ async function getFixedTasksHistory(startDate, endDate) {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
             },
             body: JSON.stringify({
-                store_id: storeId
+                store_id: storeId,
+                clientTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                clientTime: new Date().toISOString()
             })
         });
 
         const result = await response.json();
 
         if (!response.ok) {
-            throw new Error(result.message || 'Erro ao distribuir tarefas');
+            console.log('Debug info:', result.debug); // Log de debug
+            throw new Error(result.message);
         }
 
         await loadTasks();
