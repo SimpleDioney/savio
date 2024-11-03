@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Painel Administrativo</title>
-    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/styles.css" />
     <style>
-        :root {
+      :root {
         --bg-primary: #1a1a1a;
         --bg-secondary: #2d2d2d;
         --text-primary: #ffffff;
@@ -95,51 +95,51 @@
       }
 
       .employee-card {
-            background-color: var(--bg-secondary);
-            padding: 1.5rem;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
+        background-color: var(--bg-secondary);
+        padding: 1.5rem;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
 
-        .employee-info {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-        }
+      .employee-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+      }
 
-        .employee-name {
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
+      .employee-name {
+        font-size: 1.2rem;
+        font-weight: bold;
+      }
 
-        .employee-details {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-        }
+      .employee-details {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+      }
 
-        .employee-schedule {
-            display: flex;
-            gap: 1rem;
-            padding: 0.5rem;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 4px;
-            margin-bottom: 1rem;
-        }
+      .employee-schedule {
+        display: flex;
+        gap: 1rem;
+        padding: 0.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+        margin-bottom: 1rem;
+      }
 
-        .schedule-time {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
+      .schedule-time {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
 
-        .schedule-icon {
-            font-size: 1.1rem;
-        }
+      .schedule-icon {
+        font-size: 1.1rem;
+      }
 
-        .employee-status {
+      .employee-status {
         padding: 4px 12px;
         border-radius: 12px;
         font-size: 0.9em;
@@ -147,60 +147,60 @@
         align-items: center;
         gap: 6px;
         margin: 10px 0;
-    }
+      }
 
-    .status-working {
+      .status-working {
         background: var(--success);
         color: white;
-    }
+      }
 
-    .status-off {
+      .status-off {
         background: var(--danger);
         color: white;
-    }
+      }
 
-    .status-leave {
+      .status-leave {
         background: var(--warning);
         color: var(--bg-primary);
-    }
+      }
 
-    .work-schedule {
+      .work-schedule {
         color: var(--text-secondary);
         font-size: 0.9em;
         margin-top: 4px;
         display: flex;
         align-items: center;
         gap: 6px;
-    }
+      }
 
-    .employee-card {
+      .employee-card {
         background: var(--bg-secondary);
         padding: 1.5rem;
         border-radius: 8px;
         margin-bottom: 1rem;
-    }
+      }
 
-    .employee-info {
+      .employee-info {
         margin-bottom: 1rem;
-    }
+      }
 
-    .employee-name {
+      .employee-name {
         font-size: 1.2rem;
         font-weight: bold;
         margin-bottom: 0.5rem;
-    }
+      }
 
-    .employee-details {
+      .employee-details {
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
-    }
+      }
 
-    .employee-actions {
+      .employee-actions {
         display: flex;
         gap: 0.5rem;
         margin-top: 1rem;
-    }
+      }
 
       .grid {
         display: grid;
@@ -270,168 +270,168 @@
         background: var(--bg-secondary);
         border-radius: 8px;
         text-align: center;
-    }
+      }
 
-    .report-header h2 {
+      .report-header h2 {
         margin-bottom: 0.5rem;
         color: var(--accent);
-    }
+      }
 
-    .report-summary {
+      .report-summary {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
         gap: 1rem;
         margin-bottom: 2rem;
-    }
+      }
 
-    .summary-card {
+      .summary-card {
         background: var(--bg-secondary);
         padding: 1.5rem;
         border-radius: 8px;
         text-align: center;
         transition: transform 0.2s;
-    }
+      }
 
-    .summary-card:hover {
+      .summary-card:hover {
         transform: translateY(-2px);
-    }
+      }
 
-    .summary-icon {
+      .summary-icon {
         font-size: 2rem;
         margin-bottom: 0.5rem;
-    }
+      }
 
-    .summary-value {
+      .summary-value {
         font-size: 2rem;
         font-weight: bold;
         color: var(--accent);
         margin-bottom: 0.25rem;
-    }
+      }
 
-    .summary-label {
+      .summary-label {
         color: var(--text-secondary);
         font-size: 0.9rem;
-    }
+      }
 
-    .report-section {
+      .report-section {
         margin-bottom: 2rem;
-    }
+      }
 
-    .report-section h3 {
+      .report-section h3 {
         margin-bottom: 1rem;
         padding-bottom: 0.5rem;
         border-bottom: 1px solid var(--bg-secondary);
-    }
+      }
 
-    .employee-performance-grid {
+      .employee-performance-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
         gap: 1rem;
-    }
+      }
 
-    .performance-card {
+      .performance-card {
         background: var(--bg-secondary);
         padding: 1.5rem;
         border-radius: 8px;
-    }
+      }
 
-    .performance-header {
+      .performance-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 1rem;
-    }
+      }
 
-    .completion-badge {
+      .completion-badge {
         padding: 0.25rem 0.75rem;
         border-radius: 12px;
         font-weight: bold;
         font-size: 0.9rem;
-    }
+      }
 
-    .performance-stats {
+      .performance-stats {
         margin-bottom: 1rem;
-    }
+      }
 
-    .stat-row {
+      .stat-row {
         display: flex;
         justify-content: space-between;
         padding: 0.5rem 0;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
+      }
 
-    .stat-row:last-child {
+      .stat-row:last-child {
         border-bottom: none;
-    }
+      }
 
-    .performance-progress {
+      .performance-progress {
         height: 4px;
         background: rgba(255, 255, 255, 0.1);
         border-radius: 2px;
         overflow: hidden;
-    }
+      }
 
-    .progress-bar {
+      .progress-bar {
         height: 100%;
         background: var(--accent);
         transition: width 0.3s ease;
-    }
+      }
 
-    .tasks-analysis-grid {
+      .tasks-analysis-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         gap: 1rem;
-    }
+      }
 
-    .task-analysis-card {
+      .task-analysis-card {
         background: var(--bg-secondary);
         padding: 1.5rem;
         border-radius: 8px;
-    }
+      }
 
-    .task-analysis-card.fixed-task {
+      .task-analysis-card.fixed-task {
         border-left: 4px solid var(--accent);
-    }
+      }
 
-    .task-analysis-header {
+      .task-analysis-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 1rem;
-    }
+      }
 
-    .fixed-badge {
+      .fixed-badge {
         background: var(--accent);
         color: white;
         padding: 0.25rem 0.75rem;
         border-radius: 12px;
         font-size: 0.8rem;
-    }
+      }
 
-    .assigned-employees {
+      .assigned-employees {
         display: flex;
         flex-wrap: wrap;
         gap: 0.5rem;
         margin-top: 1rem;
-    }
+      }
 
-    .employee-chip {
+      .employee-chip {
         background: rgba(255, 255, 255, 0.1);
         padding: 0.25rem 0.75rem;
         border-radius: 12px;
         font-size: 0.8rem;
-    }
+      }
 
-    @media (max-width: 768px) {
+      @media (max-width: 768px) {
         .report-summary {
-            grid-template-columns: repeat(2, 1fr);
+          grid-template-columns: repeat(2, 1fr);
         }
 
         .employee-performance-grid,
         .tasks-analysis-grid {
-            grid-template-columns: 1fr;
+          grid-template-columns: 1fr;
         }
-    }
+      }
 
       th,
       td {
@@ -445,58 +445,58 @@
       }
 
       .calendar-header {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    text-align: center;
-    margin-bottom: 10px;
-    font-weight: bold;
-}
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        text-align: center;
+        margin-bottom: 10px;
+        font-weight: bold;
+      }
 
-.calendar-header div {
-    padding: 10px;
-    background: var(--bg-secondary);
-    border-radius: 4px;
-}
+      .calendar-header div {
+        padding: 10px;
+        background: var(--bg-secondary);
+        border-radius: 4px;
+      }
 
-.calendar {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
-}
+      .calendar {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 5px;
+      }
 
-.calendar-day {
+      .calendar-day {
         cursor: pointer;
-    }
+      }
 
-.calendar-day {
-    background: var(--bg-secondary);
-    padding: 10px;
-    text-align: center;
-    border-radius: 4px;
-    position: relative;
-    min-height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+      .calendar-day {
+        background: var(--bg-secondary);
+        padding: 10px;
+        text-align: center;
+        border-radius: 4px;
+        position: relative;
+        min-height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
 
-.calendar-day.empty {
-    background: transparent;
-}
+      .calendar-day.empty {
+        background: transparent;
+      }
 
-.calendar-day.has-leave {
-    background: var(--accent);
-    color: white;
-}
+      .calendar-day.has-leave {
+        background: var(--accent);
+        color: white;
+      }
 
-.calendar-day .leave-count {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    font-size: 0.8em;
-}
+      .calendar-day .leave-count {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        font-size: 0.8em;
+      }
 
-.leave-details {
+      .leave-details {
         display: none;
         position: absolute;
         top: 100%;
@@ -505,20 +505,20 @@
         background: var(--bg-secondary);
         padding: 8px;
         border-radius: 4px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         z-index: 1000;
         min-width: 150px;
         white-space: nowrap;
-    }
+      }
 
-    .leave-item {
+      .leave-item {
         display: flex;
         justify-content: space-between;
         align-items: center;
         padding: 4px 0;
-    }
+      }
 
-    .btn-remove-leave {
+      .btn-remove-leave {
         background: var(--danger);
         color: white;
         border: none;
@@ -532,233 +532,634 @@
         margin-left: 8px;
         font-size: 14px;
         padding: 0;
-    }
+      }
 
-    .btn-remove-leave:hover {
+      .btn-remove-leave:hover {
         opacity: 0.8;
-    }
+      }
 
-    .calendar-day:hover .leave-count {
+      .calendar-day:hover .leave-count {
         opacity: 0.8;
-    }
+      }
 
+      .store-card {
+        background-color: var(--bg-secondary);
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+      }
+
+      .store-info {
+        margin-bottom: 1rem;
+      }
+
+      .store-name {
+        font-size: 1.2rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+      }
+
+      .store-details {
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+      }
+
+      .store-actions {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .employee-card .store-badge {
+        background: var(--accent);
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.8em;
+        display: inline-block;
+        margin-left: 8px;
+      }
+
+      .employee-counters {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+
+      .counter-card {
+        background: var(--bg-secondary);
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .counter-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--accent);
+        margin-bottom: 0.5rem;
+      }
+
+      .counter-label {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+      }
+
+      .store-info {
+        margin-top: 0.5rem;
+        padding: 0.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+        font-size: 0.9em;
+        line-height: 1.4;
+      }
+
+      .task-list {
+        max-height: 400px;
+        overflow-y: auto;
+        margin: 1rem 0;
+      }
+
+      .task-item {
+        background: var(--bg-primary);
+        padding: 1rem;
+        border-radius: 4px;
+        margin-bottom: 0.5rem;
+      }
+
+      .task-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+      }
+
+      .task-status {
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.8em;
+      }
+
+      .task-status.pendente {
+        background: var(--warning);
+        color: var(--bg-primary);
+      }
+
+      .task-status.em-andamento {
+        background: var(--accent);
+        color: white;
+      }
+
+      .task-status.concluido {
+        background: var(--success);
+        color: white;
+      }
+
+      .task-type {
+        font-size: 0.8em;
+        color: var(--text-secondary);
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <header class="header">
-        <div class="header-title">Painel Administrativo</div>
-        <div class="header-controls">
-            <a href="/" class="btn">Voltar para Principal</a>
-            <button class="btn btn-danger" onclick="logout()">Sair</button>
-        </div>
+      <div class="header-title">Painel Administrativo</div>
+      <div class="header-controls">
+        <a href="/" class="btn">Voltar para Principal</a>
+        <button class="btn btn-danger" onclick="logout()">Sair</button>
+      </div>
     </header>
 
     <div class="main-container">
-        <div class="tab-container">
-            <div class="tab-buttons">
-                <button class="tab-button active" data-tab="employees">Funcionários</button>
-                <button class="tab-button" data-tab="fixed-tasks">Tarefas Fixas</button>
-                <button class="tab-button" data-tab="leaves">Folgas</button>
-                <button class="tab-button" data-tab="reports">Relatórios</button>
-            </div>
-
-            <!-- Aba de Funcionários -->
-            <div id="employees" class="tab-content active">
-                <div class="card">
-                    <h2>Adicionar Funcionário</h2>
-                    <form id="employeeForm" class="form-row">
-                        <div class="form-group">
-                            <label for="employeeName">Nome do Funcionário</label>
-                            <input type="text" id="employeeName" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="username">Usuário</label>
-                            <input type="text" id="username" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="password">Senha</label>
-                            <input type="password" id="password" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="workStart">Horário de Entrada</label>
-                            <input type="time" id="workStart" required value="09:00">
-                        </div>
-                        <div class="form-group">
-                            <label for="workEnd">Horário de Saída</label>
-                            <input type="time" id="workEnd" required value="18:00">
-                        </div>
-                        <button type="submit" class="btn btn-success">Adicionar Funcionário</button>
-                    </form>
-                </div>
-
-                <div class="card">
-                    <h2>Lista de Funcionários</h2>
-                    <div id="employeesList" class="grid"></div>
-                </div>
-            </div>
-
-            <!-- Aba de Tarefas Fixas -->
-            <div id="fixed-tasks" class="tab-content">
-                <div class="card">
-                    <h2>Adicionar Tarefa Fixa</h2>
-                    <form id="fixedTaskForm" class="form-row">
-                        <div class="form-group">
-                            <label for="taskName">Nome da Tarefa</label>
-                            <input type="text" id="taskName" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="taskEmployee">Funcionário</label>
-                            <select id="taskEmployee" required></select>
-                        </div>
-                        <button type="submit" class="btn btn-success">Adicionar Tarefa</button>
-                    </form>
-                </div>
-
-                <div class="card">
-                    <h2>Tarefas Fixas Atribuídas</h2>
-                    <div id="fixedTasksList"></div>
-                </div>
-            </div>
-
-            <!-- Aba de Folgas -->
-            <div id="leaves" class="tab-content">
-                <div class="card">
-                    <h2>Gerenciar Folgas</h2>
-                    <form id="leaveForm" class="form-row">
-                        <div class="form-group">
-                            <label for="leaveEmployee">Funcionário</label>
-                            <select id="leaveEmployee" required></select>
-                        </div>
-                        <div class="form-group">
-                            <label for="leaveDate">Data da Folga</label>
-                            <input type="date" id="leaveDate" required>
-                        </div>
-                        <button type="submit" class="btn btn-success">Adicionar Folga</button>
-                    </form>
-                </div>
-
-                <div class="card">
-                    <h2>Calendário de Folgas</h2>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="calendarMonth">Mês</label>
-                            <input type="month" id="calendarMonth">
-                        </div>
-                        <div class="form-group">
-                            <label for="calendarEmployee">Funcionário</label>
-                            <select id="calendarEmployee">
-                                <option value="">Todos</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div id="leavesCalendar"></div>
-                </div>
-            </div>
-
-            <!-- Aba de Relatórios -->
-            <div id="reports" class="tab-content">
-                <div class="card">
-                    <h2>Gerar Relatório</h2>
-                    <form id="reportForm" class="form-row">
-                        <div class="form-group">
-                            <label for="reportType">Tipo de Relatório</label>
-                            <select id="reportType" required>
-                                <option value="daily">Diário</option>
-                                <option value="weekly">Semanal</option>
-                                <option value="monthly">Mensal</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="reportDate">Data</label>
-                            <input type="date" id="reportDate" required>
-                        </div>
-                        <button type="submit" class="btn btn-success">Gerar Relatório</button>
-                    </form>
-                </div>
-
-                <div id="reportContent"></div>
-            </div>
+      <div class="tab-container">
+        <div class="tab-buttons">
+          <button class="tab-button active" data-tab="employees">
+            Funcionários
+          </button>
+          <button class="tab-button" data-tab="stores">Lojas</button>
+          <button class="tab-button" data-tab="fixed-tasks">
+            Tarefas Fixas
+          </button>
+          <button class="tab-button" data-tab="leaves">Folgas</button>
+          <button class="tab-button" data-tab="reports">Relatórios</button>
         </div>
+
+        <!-- Aba de Funcionários -->
+        <div id="employees" class="tab-content active">
+          <div class="card">
+            <h2>Adicionar Funcionário</h2>
+            <form id="employeeForm" class="form-row">
+              <div class="form-group">
+                <label for="employeeName">Nome do Funcionário</label>
+                <input type="text" id="employeeName" required />
+              </div>
+              <div class="form-group">
+                <label for="employeeStore">Loja</label>
+                <select id="employeeStore" required></select>
+              </div>
+              <div class="form-group">
+                <label for="username">Usuário</label>
+                <input type="text" id="username" required />
+              </div>
+              <div class="form-group">
+                <label for="password">Senha</label>
+                <input type="password" id="password" required />
+              </div>
+              <div class="form-group">
+                <label for="workStart">Horário de Entrada</label>
+                <input type="time" id="workStart" required value="09:00" />
+              </div>
+              <div class="form-group">
+                <label for="workEnd">Horário de Saída</label>
+                <input type="time" id="workEnd" required value="18:00" />
+              </div>
+              <button type="submit" class="btn btn-success">
+                Adicionar Funcionário
+              </button>
+            </form>
+          </div>
+
+          <div class="filters">
+            <div class="form-group">
+              <label for="filterStore">Filtrar por Loja</label>
+              <select id="filterStore">
+                <option value="">Todas as Lojas</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Lista de Funcionários</h2>
+            <div id="employeesList" class="grid"></div>
+          </div>
+        </div>
+
+
+        <div id="stores" class="tab-content">
+          <div class="card">
+            <h2>Adicionar Loja</h2>
+            <form id="storeForm" class="form-row">
+              <div class="form-group">
+                <label for="storeName">Nome da Loja</label>
+                <input type="text" id="storeName" required />
+              </div>
+              <div class="form-group">
+                <label for="storeAddress">Endereço</label>
+                <input type="text" id="storeAddress" />
+              </div>
+              <div class="form-group">
+                <label for="storePhone">Telefone</label>
+                <input type="text" id="storePhone" />
+              </div>
+              <button type="submit" class="btn btn-success">
+                Adicionar Loja
+              </button>
+            </form>
+          </div>
+
+          <div class="card">
+            <h2>Lista de Lojas</h2>
+            <div id="storesList" class="grid"></div>
+          </div>
+        </div>
+
+        <!-- Aba de Tarefas Fixas -->
+        <div id="fixed-tasks" class="tab-content">
+          <div class="card">
+            <h2>Adicionar Tarefa Fixa</h2>
+            <form id="fixedTaskForm" class="form-row">
+              <div class="form-group">
+                <label for="taskName">Nome da Tarefa</label>
+                <input type="text" id="taskName" required />
+              </div>
+              <div class="form-group">
+                <label for="taskEmployee">Funcionário</label>
+                <select id="taskEmployee" required></select>
+              </div>
+              <button type="submit" class="btn btn-success">
+                Adicionar Tarefa
+              </button>
+            </form>
+          </div>
+
+          <div class="card">
+            <h2>Tarefas Fixas Atribuídas</h2>
+            <div id="fixedTasksList"></div>
+          </div>
+        </div>
+
+        <!-- Aba de Folgas -->
+        <div id="leaves" class="tab-content">
+          <div class="card">
+            <h2>Gerenciar Folgas</h2>
+            <form id="leaveForm" class="form-row">
+              <div class="form-group">
+                <label for="leaveEmployee">Funcionário</label>
+                <select id="leaveEmployee" required></select>
+              </div>
+              <div class="form-group">
+                <label for="leaveDate">Data da Folga</label>
+                <input type="date" id="leaveDate" required />
+              </div>
+              <button type="submit" class="btn btn-success">
+                Adicionar Folga
+              </button>
+            </form>
+          </div>
+
+          <div class="card">
+            <h2>Calendário de Folgas</h2>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="calendarMonth">Mês</label>
+                <input type="month" id="calendarMonth" />
+              </div>
+              <div class="form-group">
+                <label for="calendarEmployee">Funcionário</label>
+                <select id="calendarEmployee">
+                  <option value="">Todos</option>
+                </select>
+              </div>
+            </div>
+            <div id="leavesCalendar"></div>
+          </div>
+        </div>
+
+        <!-- Aba de Relatórios -->
+        <div id="reports" class="tab-content">
+          <div class="card">
+            <h2>Gerar Relatório</h2>
+            <form id="reportForm" class="form-row">
+              <div class="form-group">
+                <label for="reportType">Tipo de Relatório</label>
+                <select id="reportType" required>
+                  <option value="daily">Diário</option>
+                  <option value="weekly">Semanal</option>
+                  <option value="monthly">Mensal</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="reportDate">Data</label>
+                <input type="date" id="reportDate" required />
+              </div>
+              <div class="form-group">
+                <label for="reportStore">Loja</label>
+                <select id="reportStore">
+                  <option value="">Todas as Lojas</option>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-success">
+                Gerar Relatório
+              </button>
+            </form>
+          </div>
+
+          <div id="reportContent"></div>
+        </div>
+      </div>
     </div>
 
     <script>
-        let employees = [];
-        let currentUser = null;
+      let employees = [];
+      let currentUser = null;
+      let stores = [];
+      let currentStoreFilter = "";
 
-        // Inicialização
-        async function init() {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                window.location.href = '/login.html';
-                return;
-            }
+      // Inicialização
+      async function init() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = '/login.html';
+        return;
+    }
 
-            try {
-                currentUser = JSON.parse(atob(token.split('.')[1]));
-                if (!currentUser.isAdmin) {
-                    window.location.href = '/';
-                    return;
-                }
-
-                await loadEmployees();
-                setupEventListeners();
-                document.getElementById('reportDate').value = new Date().toISOString().split('T')[0];
-                document.getElementById('calendarMonth').value = new Date().toISOString().slice(0, 7);
-            } catch (error) {
-                console.error('Erro na inicialização:', error);
-                logout();
-            }
+    try {
+        currentUser = JSON.parse(atob(token.split('.')[1]));
+        if (!currentUser.isAdmin) {
+            window.location.href = '/';
+            return;
         }
 
-        // Carregar funcionários
-        async function loadEmployees() {
-            try {
-                const response = await fetch('/api/employees', {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
+        // Carregar lojas primeiro
+        await loadStores();
+        // Depois carregar funcionários
+        await loadEmployees();
+        
+        setupEventListeners();
+        
+        // Definir valores padrão para datas
+        document.getElementById('reportDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('calendarMonth').value = new Date().toISOString().slice(0, 7);
+        
+        // Atualizar todos os selects de loja
+        updateStoreSelects();
+    } catch (error) {
+        console.error('Erro na inicialização:', error);
+        logout();
+    }
+}
+      
+      // Carregar lojas
+      async function loadStores() {
+        try {
+          const response = await fetch("/api/stores", {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          });
 
-                if (!response.ok) throw new Error('Erro ao carregar funcionários');
+          if (!response.ok) throw new Error("Erro ao carregar lojas");
 
-                employees = await response.json();
-                updateEmployeesList();
-                updateEmployeeSelects();
-            } catch (error) {
-                console.error('Erro ao carregar funcionários:', error);
-                showNotification('Erro ao carregar funcionários', 'error');
+          stores = await response.json();
+          updateStoresList();
+          updateStoreSelects();
+        } catch (error) {
+          console.error("Erro ao carregar lojas:", error);
+          showNotification("Erro ao carregar lojas", "error");
+        }
+      }
+
+      // Atualizar lista de lojas
+      function updateStoresList() {
+        const list = document.getElementById("storesList");
+        list.innerHTML = stores
+          .map(
+            (store) => `
+        <div class="store-card">
+            <div class="store-info">
+                <div class="store-name">${store.name}</div>
+                <div class="store-details">
+                    ${store.address ? `<div>📍 ${store.address}</div>` : ""}
+                    ${store.phone ? `<div>📞 ${store.phone}</div>` : ""}
+                </div>
+            </div>
+            <div class="store-actions">
+                <button onclick="editStore(${store.id})" class="btn">
+                    Editar
+                </button>
+                <button onclick="deleteStore(${
+                  store.id
+                })" class="btn btn-danger">
+                    Remover
+                </button>
+            </div>
+        </div>
+    `
+          )
+          .join("");
+      }
+
+      // Atualizar selects de lojas
+      function updateStoreSelects() {
+    // Array com IDs de todos os selects que precisam ser atualizados
+    const selectIds = ['employeeStore', 'filterStore', 'reportStore'];
+    
+    selectIds.forEach(id => {
+        const select = document.getElementById(id);
+        if (select) {
+            // Valor padrão apropriado para cada select
+            const defaultOption = id === 'employeeStore' ? 
+                '<option value="">Selecione uma loja</option>' : 
+                '<option value="">Todas as Lojas</option>';
+            
+            select.innerHTML = defaultOption + stores
+                .filter(store => store.active)
+                .map(store => `
+                    <option value="${store.id}">${store.name}</option>
+                `).join('');
+        }
+    });
+}
+
+      // Adicionar loja
+      async function addStore(event) {
+        event.preventDefault();
+
+        const name = document.getElementById("storeName").value;
+        const address = document.getElementById("storeAddress").value;
+        const phone = document.getElementById("storePhone").value;
+
+        try {
+          const response = await fetch("/api/stores", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify({ name, address, phone }),
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || "Erro ao criar loja");
+          }
+
+          showNotification("Loja adicionada com sucesso", "success");
+          event.target.reset();
+          await loadStores();
+        } catch (error) {
+          console.error("Erro ao adicionar loja:", error);
+          showNotification(error.message, "error");
+        }
+      }
+
+      // Editar loja
+      async function editStore(id) {
+        try {
+          const store = stores.find((s) => s.id === id);
+          if (!store) return;
+
+          const newName = prompt("Novo nome:", store.name);
+          const newAddress = prompt("Novo endereço:", store.address);
+          const newPhone = prompt("Novo telefone:", store.phone);
+
+          if (!newName) return;
+
+          const response = await fetch(`/api/stores/${id}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify({
+              name: newName,
+              address: newAddress,
+              phone: newPhone,
+              active: true,
+            }),
+          });
+
+          if (!response.ok) throw new Error("Erro ao atualizar loja");
+
+          showNotification("Loja atualizada com sucesso", "success");
+          await loadStores();
+        } catch (error) {
+          console.error("Erro ao editar loja:", error);
+          showNotification("Erro ao atualizar loja", "error");
+        }
+      }
+
+      async function deleteStore(storeId) {
+    if (!confirm('Tem certeza que deseja remover esta loja? Todos os funcionários desta loja serão movidos para sem loja.')) return;
+
+    try {
+        const response = await fetch(`/api/stores/${storeId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Erro ao remover loja');
         }
 
-        // Atualizar lista de funcionários
-        function updateEmployeesList() {
-    const list = document.getElementById('employeesList');
-    list.innerHTML = employees.map(emp => {
-        // Determinar status do funcionário
-        let statusClass, statusText, statusIcon;
-        if (emp.on_leave) {
-            statusClass = 'status-leave';
-            statusText = 'De Folga';
-            statusIcon = '🏖️';
-        } else if (!isWithinWorkHours(emp.work_start, emp.work_end)) {
-            statusClass = 'status-off';
-            statusText = 'Fora de Expediente';
-            statusIcon = '🔴';
-        } else {
-            statusClass = 'status-working';
-            statusText = 'Disponível';
-            statusIcon = '🟢';
-        }
+        showNotification('Loja removida com sucesso', 'success');
+        await Promise.all([
+            loadStores(),
+            loadEmployees()
+        ]);
+    } catch (error) {
+        console.error('Erro ao remover loja:', error);
+        showNotification(error.message, 'error');
+    }
+}
 
-        return `
+      // Carregar funcionários
+      async function loadEmployees() {
+        try {
+          const storeId = document.getElementById("filterStore")?.value;
+          currentStoreFilter = storeId; // Armazena o filtro atual
+
+          let url = "/api/employees";
+          if (storeId) {
+            url += `?store_id=${storeId}`;
+          }
+
+          const response = await fetch(url, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          });
+
+          if (!response.ok) throw new Error("Erro ao carregar funcionários");
+
+          employees = await response.json();
+          updateEmployeesList();
+          updateEmployeeSelects();
+        } catch (error) {
+          console.error("Erro ao carregar funcionários:", error);
+          showNotification("Erro ao carregar funcionários", "error");
+        }
+      }
+
+      // Atualizar lista de funcionários
+      function updateEmployeesList() {
+        const list = document.getElementById("employeesList");
+
+        // Filtrar funcionários se houver um filtro de loja ativo
+        const filteredEmployees = currentStoreFilter
+          ? employees.filter(
+              (emp) => emp.store_id.toString() === currentStoreFilter
+            )
+          : employees;
+
+        list.innerHTML = employees
+          .map((emp) => {
+            // Determinar status do funcionário
+            let statusClass, statusText, statusIcon;
+            if (emp.on_leave) {
+              statusClass = "status-leave";
+              statusText = "De Folga";
+              statusIcon = "🏖️";
+            } else if (!isWithinWorkHours(emp.work_start, emp.work_end)) {
+              statusClass = "status-off";
+              statusText = "Fora de Expediente";
+              statusIcon = "🔴";
+            } else {
+              statusClass = "status-working";
+              statusText = "Disponível";
+              statusIcon = "🟢";
+            }
+
+            const store = stores.find((s) => s.id === emp.store_id);
+
+            return `
             <div class="employee-card">
                 <div class="employee-info">
-                    <div class="employee-name">${emp.name}</div>
+                    <div class="employee-name">
+                        ${emp.name}
+                        ${
+                          store
+                            ? `<span class="store-badge">${store.name}</span>`
+                            : ""
+                        }
+                    </div>
                     <div class="employee-details">
                         <div>Usuário: ${emp.username}</div>
                         <div class="work-schedule">
                             🕒 Horário: ${emp.work_start} - ${emp.work_end}
                         </div>
+                        ${
+                          store
+                            ? `
+                        <div class="store-info">
+                            📍 Loja: ${store.name}
+                            ${
+                              store.address
+                                ? `<br>📮 Endereço: ${store.address}`
+                                : ""
+                            }
+                            ${
+                              store.phone
+                                ? `<br>📞 Telefone: ${store.phone}`
+                                : ""
+                            }
+                        </div>
+                        `
+                            : ""
+                        }
                     </div>
                 </div>
                 <div class="employee-status ${statusClass}">
@@ -768,487 +1169,668 @@
                     <button onclick="editEmployee(${emp.id})" class="btn">
                         Editar
                     </button>
-                    <button onclick="deleteEmployee(${emp.id})" class="btn btn-danger">
+                    <button onclick="deleteEmployee(${
+                      emp.id
+                    })" class="btn btn-danger">
                         Remover
+                    </button>
+                    <button onclick="viewEmployeeTasks(${
+                      emp.id
+                    })" class="btn btn-success">
+                        Tarefas
                     </button>
                 </div>
             </div>
         `;
-    }).join('');
-}
+          })
+          .join("");
 
-function isWithinWorkHours(workStart, workEnd) {
-    const now = new Date();
-    const currentTime = now.getHours() * 60 + now.getMinutes(); // Converter para minutos
+        // Atualizar contadores
+        updateEmployeeCounters(filteredEmployees);
+      }
 
-    // Converter horário de trabalho para minutos
-    const [startHour, startMinute] = workStart.split(':').map(Number);
-    const [endHour, endMinute] = workEnd.split(':').map(Number);
-    
-    const workStartMinutes = startHour * 60 + startMinute;
-    const workEndMinutes = endHour * 60 + endMinute;
+      function updateEmployeeCounters(filteredEmployees) {
+        const totalEmployees = filteredEmployees.length;
+        const activeEmployees = filteredEmployees.filter(
+          (emp) =>
+            !emp.on_leave && isWithinWorkHours(emp.work_start, emp.work_end)
+        ).length;
+        const onLeaveEmployees = filteredEmployees.filter(
+          (emp) => emp.on_leave
+        ).length;
 
-    return currentTime >= workStartMinutes && currentTime <= workEndMinutes;
-}
+        const counters = document.createElement("div");
+        counters.className = "employee-counters";
+        counters.innerHTML = `
+        <div class="counter-card">
+            <div class="counter-value">${totalEmployees}</div>
+            <div class="counter-label">Total de Funcionários</div>
+        </div>
+        <div class="counter-card">
+            <div class="counter-value">${activeEmployees}</div>
+            <div class="counter-label">Funcionários Ativos</div>
+        </div>
+        <div class="counter-card">
+            <div class="counter-value">${onLeaveEmployees}</div>
+            <div class="counter-label">De Folga</div>
+        </div>
+    `;
 
-async function deleteTask(taskId) {
-    if (!confirm('Tem certeza que deseja excluir esta tarefa?')) return;
-
-    try {
-        const response = await fetch(`/api/tasks/${taskId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Erro ao excluir tarefa');
+        const employeesList = document.getElementById("employeesList");
+        const existingCounters = document.querySelector(".employee-counters");
+        if (existingCounters) {
+          existingCounters.remove();
         }
+        employeesList.parentNode.insertBefore(counters, employeesList);
+      }
 
-        // Se a exclusão foi bem sucedida, recarregar as listas
-        await Promise.all([
-            loadTasks(), // Recarrega tarefas normais
-            loadFixedTasks() // Recarrega tarefas fixas
-        ]);
-        
-        showNotification('Tarefa excluída com sucesso', 'success');
-    } catch (error) {
-        console.error('Erro ao excluir tarefa:', error);
-        showNotification(error.message, 'error');
-    }
-}
+      function isWithinWorkHours(workStart, workEnd) {
+        const now = new Date();
+        const currentTime = now.getHours() * 60 + now.getMinutes(); // Converter para minutos
 
-// Função específica para deletar tarefas fixas
-async function deleteFixedTask(taskId) {
-    if (!confirm('Tem certeza que deseja excluir esta tarefa fixa? Esta ação não pode ser desfeita.')) return;
+        // Converter horário de trabalho para minutos
+        const [startHour, startMinute] = workStart.split(":").map(Number);
+        const [endHour, endMinute] = workEnd.split(":").map(Number);
 
-    try {
-        const response = await fetch(`/api/tasks/${taskId}`, {
-            method: 'DELETE',
+        const workStartMinutes = startHour * 60 + startMinute;
+        const workEndMinutes = endHour * 60 + endMinute;
+
+        return currentTime >= workStartMinutes && currentTime <= workEndMinutes;
+      }
+
+      async function deleteTask(taskId) {
+        if (!confirm("Tem certeza que deseja excluir esta tarefa?")) return;
+
+        try {
+          const response = await fetch(`/api/tasks/${taskId}`, {
+            method: "DELETE",
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Erro ao excluir tarefa fixa');
-        }
-
-        // Recarregar apenas a lista de tarefas fixas
-        await loadFixedTasks();
-        showNotification('Tarefa fixa excluída com sucesso', 'success');
-    } catch (error) {
-        console.error('Erro ao excluir tarefa fixa:', error);
-        showNotification(error.message, 'error');
-    }
-}
-
-// Adicionar verificação periódica de status
-function checkWorkingStatus() {
-    employees.forEach(emp => {
-        emp.is_working = isWithinWorkHours(emp.work_start, emp.work_end);
-    });
-    updateEmployeesList();
-}
-
-async function updateTaskStatus(taskId, status) {
-    try {
-        const response = await fetch(`/api/tasks/${taskId}/status`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
             },
-            body: JSON.stringify({ 
-                status,
-                date: document.getElementById('filterDate').value 
-            })
-        });
+          });
 
-        if (!response.ok) {
+          if (!response.ok) {
             const error = await response.json();
-            throw new Error(error.message || 'Erro ao atualizar status');
+            throw new Error(error.message || "Erro ao excluir tarefa");
+          }
+
+          // Se a exclusão foi bem sucedida, recarregar as listas
+          await Promise.all([
+            loadTasks(), // Recarrega tarefas normais
+            loadFixedTasks(), // Recarrega tarefas fixas
+          ]);
+
+          showNotification("Tarefa excluída com sucesso", "success");
+        } catch (error) {
+          console.error("Erro ao excluir tarefa:", error);
+          showNotification(error.message, "error");
         }
+      }
 
-        await loadTasks();
-        showNotification('Status atualizado com sucesso', 'success');
-    } catch (error) {
-        console.error('Erro ao atualizar status:', error);
-        showNotification(error.message, 'error');
-    }
-}
+      // Função específica para deletar tarefas fixas
+      async function deleteFixedTask(taskId) {
+        if (
+          !confirm(
+            "Tem certeza que deseja excluir esta tarefa fixa? Esta ação não pode ser desfeita."
+          )
+        )
+          return;
 
-        // Atualizar selects de funcionários
-        function updateEmployeeSelects() {
-            const selects = ['taskEmployee', 'leaveEmployee', 'calendarEmployee'];
-            selects.forEach(id => {
-                const select = document.getElementById(id);
-                if (select) {
-                    select.innerHTML = id === 'calendarEmployee' ? 
-                        '<option value="">Todos</option>' : '';
-                    employees.filter(emp => emp.active).forEach(emp => {
-                        select.innerHTML += `
+        try {
+          const response = await fetch(`/api/tasks/${taskId}`, {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || "Erro ao excluir tarefa fixa");
+          }
+
+          // Recarregar apenas a lista de tarefas fixas
+          await loadFixedTasks();
+          showNotification("Tarefa fixa excluída com sucesso", "success");
+        } catch (error) {
+          console.error("Erro ao excluir tarefa fixa:", error);
+          showNotification(error.message, "error");
+        }
+      }
+
+      // Adicionar verificação periódica de status
+      function checkWorkingStatus() {
+        employees.forEach((emp) => {
+          emp.is_working = isWithinWorkHours(emp.work_start, emp.work_end);
+        });
+        updateEmployeesList();
+      }
+
+      async function updateTaskStatus(taskId, status) {
+        try {
+          const response = await fetch(`/api/tasks/${taskId}/status`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify({
+              status,
+              date: document.getElementById("filterDate").value,
+            }),
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || "Erro ao atualizar status");
+          }
+
+          await loadTasks();
+          showNotification("Status atualizado com sucesso", "success");
+        } catch (error) {
+          console.error("Erro ao atualizar status:", error);
+          showNotification(error.message, "error");
+        }
+      }
+
+      // Atualizar selects de funcionários
+      function updateEmployeeSelects() {
+        const selects = ["taskEmployee", "leaveEmployee", "calendarEmployee"];
+        selects.forEach((id) => {
+          const select = document.getElementById(id);
+          if (select) {
+            select.innerHTML =
+              id === "calendarEmployee"
+                ? '<option value="">Todos</option>'
+                : "";
+            employees
+              .filter((emp) => emp.active)
+              .forEach((emp) => {
+                select.innerHTML += `
                             <option value="${emp.id}">${emp.name}</option>
                         `;
-                    });
-                }
-            });
-        }
+              });
+          }
+        });
+      }
 
-        // Adicionar funcionário
-        async function addEmployee(event) {
+      // Adicionar funcionário
+      async function addEmployee(event) {
         event.preventDefault();
-        
-        const name = document.getElementById('employeeName').value;
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        const workStart = document.getElementById('workStart').value;
-        const workEnd = document.getElementById('workEnd').value;
+
+        const name = document.getElementById("employeeName").value;
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+        const workStart = document.getElementById("workStart").value;
+        const workEnd = document.getElementById("workEnd").value;
+        const storeId = document.getElementById("employeeStore").value;
+
+        if (!name || !username || !password || !storeId) {
+          showNotification("Todos os campos são obrigatórios", "error");
+          return;
+        }
 
         try {
-            const response = await fetch('/api/employees', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify({ 
-                    name, 
-                    username, 
-                    password,
-                    workStart,
-                    workEnd
-                })
-            });
+          // Verificar se o usuário já existe
+          const checkResponse = await fetch(`/api/users/check/${username}`, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          });
 
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || 'Erro ao criar funcionário');
-            }
+          const checkResult = await checkResponse.json();
+          if (checkResult.exists) {
+            showNotification("Nome de usuário já existe", "error");
+            return;
+          }
 
-            showNotification('Funcionário adicionado com sucesso', 'success');
-            event.target.reset();
-            await loadEmployees();
+          const response = await fetch("/api/employees", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify({
+              name,
+              username,
+              password,
+              workStart,
+              workEnd,
+              store_id: storeId,
+            }),
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || "Erro ao criar funcionário");
+          }
+
+          showNotification("Funcionário adicionado com sucesso", "success");
+          event.target.reset();
+
+          await loadEmployees();
         } catch (error) {
-            console.error('Erro ao adicionar funcionário:', error);
-            showNotification(error.message, 'error');
+          console.error("Erro ao adicionar funcionário:", error);
+          showNotification(error.message, "error");
         }
-    }
-
-    async function editEmployee(id) {
+      }
+      async function editEmployee(id) {
         try {
-            const employee = employees.find(emp => emp.id === id);
-            if (!employee) return;
+          const employee = employees.find((emp) => emp.id === id);
+          if (!employee) return;
 
-            const newName = prompt('Novo nome:', employee.name);
-            const newWorkStart = prompt('Novo horário de entrada (HH:MM):', employee.work_start);
-            const newWorkEnd = prompt('Novo horário de saída (HH:MM):', employee.work_end);
-            const newPassword = prompt('Nova senha (deixe em branco para manter a atual):');
+          const newName = prompt("Novo nome:", employee.name);
+          const newWorkStart = prompt(
+            "Novo horário de entrada (HH:MM):",
+            employee.work_start
+          );
+          const newWorkEnd = prompt(
+            "Novo horário de saída (HH:MM):",
+            employee.work_end
+          );
+          const newPassword = prompt(
+            "Nova senha (deixe em branco para manter a atual):"
+          );
 
-            if (!newName || !newWorkStart || !newWorkEnd) return;
+          if (!newName || !newWorkStart || !newWorkEnd) return;
 
-            const data = {
-                name: newName,
-                workStart: newWorkStart,
-                workEnd: newWorkEnd
-            };
+          const data = {
+            name: newName,
+            workStart: newWorkStart,
+            workEnd: newWorkEnd,
+          };
 
-            if (newPassword) {
-                data.password = newPassword;
-            }
+          if (newPassword) {
+            data.password = newPassword;
+          }
 
-            const response = await fetch(`/api/employees/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify(data)
-            });
+          const response = await fetch(`/api/employees/${id}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify(data),
+          });
 
-            if (!response.ok) throw new Error('Erro ao atualizar funcionário');
+          if (!response.ok) throw new Error("Erro ao atualizar funcionário");
 
-            showNotification('Funcionário atualizado com sucesso', 'success');
-            await loadEmployees();
+          showNotification("Funcionário atualizado com sucesso", "success");
+          await loadEmployees();
         } catch (error) {
-            console.error('Erro ao editar funcionário:', error);
-            showNotification('Erro ao atualizar funcionário', 'error');
+          console.error("Erro ao editar funcionário:", error);
+          showNotification("Erro ao atualizar funcionário", "error");
         }
-    }
+      }
 
+      // Remover funcionário
+      async function deleteEmployee(id) {
+        if (!confirm("Tem certeza que deseja remover este funcionário?"))
+          return;
 
-        // Remover funcionário
-        async function deleteEmployee(id) {
-            if (!confirm('Tem certeza que deseja remover este funcionário?')) return;
+        try {
+          const response = await fetch(`/api/employees/${id}`, {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          });
 
-            try {
-                const response = await fetch(`/api/employees/${id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
+          if (!response.ok) throw new Error("Erro ao remover funcionário");
 
-                if (!response.ok) throw new Error('Erro ao remover funcionário');
-
-                showNotification('Funcionário removido com sucesso', 'success');
-                await loadEmployees();
-            } catch (error) {
-                console.error('Erro ao remover funcionário:', error);
-                showNotification('Erro ao remover funcionário', 'error');
-            }
+          showNotification("Funcionário removido com sucesso", "success");
+          await loadEmployees();
+        } catch (error) {
+          console.error("Erro ao remover funcionário:", error);
+          showNotification("Erro ao remover funcionário", "error");
         }
+      }
 
-        // Adicionar tarefa fixa
-        async function addFixedTask(event) {
-            event.preventDefault();
+      // Adicionar tarefa fixa
+      async function addFixedTask(event) {
+        event.preventDefault();
 
-            const name = document.getElementById('taskName').value;
-            const employeeId = document.getElementById('taskEmployee').value;
+        const name = document.getElementById("taskName").value;
+        const employeeId = document.getElementById("taskEmployee").value;
 
-            try {
-                const response = await fetch('/api/tasks/fixed', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    },
-                    body: JSON.stringify({ name, employeeId })
-                });
+        try {
+          const response = await fetch("/api/tasks/fixed", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify({ name, employeeId }),
+          });
 
-                if (!response.ok) throw new Error('Erro ao criar tarefa fixa');
+          if (!response.ok) throw new Error("Erro ao criar tarefa fixa");
 
-                showNotification('Tarefa fixa adicionada com sucesso', 'success');
-                event.target.reset();
-                await loadFixedTasks();
-            } catch (error) {
-                console.error('Erro ao adicionar tarefa fixa:', error);
-                showNotification('Erro ao adicionar tarefa fixa', 'error');
-            }
+          showNotification("Tarefa fixa adicionada com sucesso", "success");
+          event.target.reset();
+          await loadFixedTasks();
+        } catch (error) {
+          console.error("Erro ao adicionar tarefa fixa:", error);
+          showNotification("Erro ao adicionar tarefa fixa", "error");
         }
+      }
 
-        // Carregar tarefas fixas
-        async function loadFixedTasks() {
-            try {
-                const response = await fetch('/api/tasks/fixed', {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
+      // Carregar tarefas fixas
+      async function loadFixedTasks() {
+        try {
+          const response = await fetch("/api/tasks/fixed", {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          });
 
-                if (!response.ok) throw new Error('Erro ao carregar tarefas fixas');
+          if (!response.ok) throw new Error("Erro ao carregar tarefas fixas");
 
-                const tasks = await response.json();
-                const list = document.getElementById('fixedTasksList');
-                list.innerHTML = tasks.map(task => `
+          const tasks = await response.json();
+          const list = document.getElementById("fixedTasksList");
+          list.innerHTML = tasks
+            .map(
+              (task) => `
                     <div class="task-item">
                         <div class="task-info">
                           <span>${task.name}</span>
-                            <span>Atribuído a: ${employees.find(e => e.id === task.employee_id)?.name || 'N/A'}</span>
+                            <span>Atribuído a: ${
+                              employees.find((e) => e.id === task.employee_id)
+                                ?.name || "N/A"
+                            }</span>
                         </div>
-                        <button class="btn btn-danger" onclick="deleteFixedTask(${task.id})">
+                        <button class="btn btn-danger" onclick="deleteFixedTask(${
+                          task.id
+                        })">
                             Remover
                         </button>
                     </div>
-                `).join('');
-            } catch (error) {
-                console.error('Erro ao carregar tarefas fixas:', error);
-                showNotification('Erro ao carregar tarefas fixas', 'error');
-            }
+                `
+            )
+            .join("");
+        } catch (error) {
+          console.error("Erro ao carregar tarefas fixas:", error);
+          showNotification("Erro ao carregar tarefas fixas", "error");
         }
+      }
 
-        // Adicionar folga
-        async function addLeave(event) {
-            event.preventDefault();
+      // Adicionar folga
+      async function addLeave(event) {
+        event.preventDefault();
 
-            const employeeId = document.getElementById('leaveEmployee').value;
-            const date = document.getElementById('leaveDate').value;
+        const employeeId = document.getElementById("leaveEmployee").value;
+        const date = document.getElementById("leaveDate").value;
 
-            try {
-                const response = await fetch('/api/leaves', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    },
-                    body: JSON.stringify({ employeeId, date })
-                });
-
-                if (!response.ok) throw new Error('Erro ao adicionar folga');
-
-                showNotification('Folga adicionada com sucesso', 'success');
-                event.target.reset();
-                await updateLeavesCalendar();
-            } catch (error) {
-                console.error('Erro ao adicionar folga:', error);
-                showNotification('Erro ao adicionar folga', 'error');
-            }
-        }
-
-        // Atualizar calendário de folgas
-        async function updateLeavesCalendar() {
-    try {
-        const month = document.getElementById('calendarMonth').value;
-        const employeeId = document.getElementById('calendarEmployee').value;
-        const [year, monthNum] = month.split('-');
-
-        let url = `/api/leaves?month=${monthNum}&year=${year}`;
-        if (employeeId) {
-            url += `&employeeId=${employeeId}`;
-        }
-
-        const response = await fetch(url, {
+        try {
+          const response = await fetch("/api/leaves", {
+            method: "POST",
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-        });
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify({ employeeId, date }),
+          });
 
-        if (!response.ok) throw new Error('Erro ao carregar folgas');
+          if (!response.ok) throw new Error("Erro ao adicionar folga");
 
-        const leaves = await response.json();
-        const filteredLeaves = employeeId ? 
-            leaves.filter(leave => leave.employee_id.toString() === employeeId) : 
-            leaves;
+          showNotification("Folga adicionada com sucesso", "success");
+          event.target.reset();
+          await updateLeavesCalendar();
+        } catch (error) {
+          console.error("Erro ao adicionar folga:", error);
+          showNotification("Erro ao adicionar folga", "error");
+        }
+      }
 
-        const calendar = document.getElementById('leavesCalendar');
-        const daysInMonth = new Date(year, monthNum, 0).getDate();
-        const firstDay = new Date(year, monthNum - 1, 1).getDay();
+      // Atualizar calendário de folgas
+      async function updateLeavesCalendar() {
+        try {
+          const month = document.getElementById("calendarMonth").value;
+          const employeeId = document.getElementById("calendarEmployee").value;
+          const [year, monthNum] = month.split("-");
 
-        const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-        
-        let calendarHTML = `
+          let url = `/api/leaves?month=${monthNum}&year=${year}`;
+          if (employeeId) {
+            url += `&employeeId=${employeeId}`;
+          }
+
+          const response = await fetch(url, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          });
+
+          if (!response.ok) throw new Error("Erro ao carregar folgas");
+
+          const leaves = await response.json();
+          const filteredLeaves = employeeId
+            ? leaves.filter(
+                (leave) => leave.employee_id.toString() === employeeId
+              )
+            : leaves;
+
+          const calendar = document.getElementById("leavesCalendar");
+          const daysInMonth = new Date(year, monthNum, 0).getDate();
+          const firstDay = new Date(year, monthNum - 1, 1).getDay();
+
+          const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+          let calendarHTML = `
             <div class="calendar-header">
-                ${weekDays.map(day => `<div>${day}</div>`).join('')}
+                ${weekDays.map((day) => `<div>${day}</div>`).join("")}
             </div>
             <div class="calendar">
         `;
 
-        // Dias vazios no início do mês
-        for (let i = 0; i < firstDay; i++) {
+          // Dias vazios no início do mês
+          for (let i = 0; i < firstDay; i++) {
             calendarHTML += '<div class="calendar-day empty"></div>';
-        }
+          }
 
-        // Dias do mês
-        for (let day = 1; day <= daysInMonth; day++) {
-            const date = `${year}-${monthNum.padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            const dayLeaves = filteredLeaves.filter(leave => leave.date === date);
+          // Dias do mês
+          for (let day = 1; day <= daysInMonth; day++) {
+            const date = `${year}-${monthNum.padStart(2, "0")}-${String(
+              day
+            ).padStart(2, "0")}`;
+            const dayLeaves = filteredLeaves.filter(
+              (leave) => leave.date === date
+            );
             const hasLeave = dayLeaves.length > 0;
 
-            const employeesOnLeave = dayLeaves.map(leave => ({
-                name: employees.find(e => e.id === leave.employee_id)?.name,
-                leaveId: leave.id
-            })).filter(e => e.name);
+            const employeesOnLeave = dayLeaves
+              .map((leave) => ({
+                name: employees.find((e) => e.id === leave.employee_id)?.name,
+                leaveId: leave.id,
+              }))
+              .filter((e) => e.name);
 
             calendarHTML += `
-                <div class="calendar-day ${hasLeave ? 'has-leave' : ''}"
-                     title="${hasLeave ? 'Clique para ver detalhes' : ''}">
+                <div class="calendar-day ${hasLeave ? "has-leave" : ""}"
+                     title="${hasLeave ? "Clique para ver detalhes" : ""}">
                     ${day}
-                    ${hasLeave ? `
-                        <div class="leave-count">${employeesOnLeave.length}</div>
+                    ${
+                      hasLeave
+                        ? `
+                        <div class="leave-count">${
+                          employeesOnLeave.length
+                        }</div>
                         <div class="leave-details">
-                            ${employeesOnLeave.map(emp => `
+                            ${employeesOnLeave
+                              .map(
+                                (emp) => `
                                 <div class="leave-item">
                                     ${emp.name}
                                     <button onclick="removeLeave(${emp.leaveId})" class="btn-remove-leave">
                                         ×
                                     </button>
                                 </div>
-                            `).join('')}
+                            `
+                              )
+                              .join("")}
                         </div>
-                    ` : ''}
+                    `
+                        : ""
+                    }
                 </div>
             `;
-        }
+          }
 
-        calendar.innerHTML = calendarHTML + '</div>';
-        document.querySelectorAll('.calendar-day.has-leave').forEach(day => {
-            day.addEventListener('click', function(e) {
-                if (e.target.classList.contains('btn-remove-leave')) return;
-                const details = this.querySelector('.leave-details');
+          calendar.innerHTML = calendarHTML + "</div>";
+          document
+            .querySelectorAll(".calendar-day.has-leave")
+            .forEach((day) => {
+              day.addEventListener("click", function (e) {
+                if (e.target.classList.contains("btn-remove-leave")) return;
+                const details = this.querySelector(".leave-details");
                 if (details) {
-                    details.style.display = details.style.display === 'block' ? 'none' : 'block';
+                  details.style.display =
+                    details.style.display === "block" ? "none" : "block";
                 }
+              });
             });
-        });
-    } catch (error) {
-        console.error('Erro ao atualizar calendário:', error);
-        showNotification('Erro ao atualizar calendário', 'error');
-    }
-}
+        } catch (error) {
+          console.error("Erro ao atualizar calendário:", error);
+          showNotification("Erro ao atualizar calendário", "error");
+        }
+      }
 
-async function removeLeave(leaveId) {
-    if (!confirm('Tem certeza que deseja remover esta folga?')) return;
+      function updateStoreFilters() {
+        const filterStore = document.getElementById("filterStore");
+        const reportStore = document.getElementById("reportStore"); // Para relatórios
 
-    try {
-        const response = await fetch(`/api/leaves/${leaveId}`, {
-            method: 'DELETE',
+        const storeOptions =
+          '<option value="">Todas as Lojas</option>' +
+          stores
+            .map(
+              (store) => `<option value="${store.id}">${store.name}</option>`
+            )
+            .join("");
+
+        if (filterStore) filterStore.innerHTML = storeOptions;
+        if (reportStore) reportStore.innerHTML = storeOptions;
+      }
+
+      // Modificar a função loadEmployees para incluir filtro
+      async function loadEmployees() {
+        try {
+          const storeId = document.getElementById("filterStore")?.value;
+          let url = "/api/employees";
+          if (storeId) {
+            url += `?store_id=${storeId}`;
+          }
+
+          const response = await fetch(url, {
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-        });
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          });
 
-        if (!response.ok) throw new Error('Erro ao remover folga');
+          if (!response.ok) throw new Error("Erro ao carregar funcionários");
 
-        showNotification('Folga removida com sucesso', 'success');
-        await updateLeavesCalendar();
-    } catch (error) {
-        console.error('Erro ao remover folga:', error);
-        showNotification('Erro ao remover folga', 'error');
-    }
-}
+          employees = await response.json();
+          updateEmployeesList();
+          updateEmployeeSelects();
+        } catch (error) {
+          console.error("Erro ao carregar funcionários:", error);
+          showNotification("Erro ao carregar funcionários", "error");
+        }
+      }
 
-        // Gerar relatório
-        async function generateReport(event) {
-    event.preventDefault();
+      async function removeLeave(leaveId) {
+        if (!confirm("Tem certeza que deseja remover esta folga?")) return;
 
-    const type = document.getElementById('reportType').value;
-    const date = document.getElementById('reportDate').value;
-
-    try {
-        const response = await fetch(`/api/reports?type=${type}&date=${date}`, {
+        try {
+          const response = await fetch(`/api/leaves/${leaveId}`, {
+            method: "DELETE",
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-        });
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          });
 
-        if (!response.ok) throw new Error('Erro ao gerar relatório');
+          if (!response.ok) throw new Error("Erro ao remover folga");
 
-        const report = await response.json();
-        const content = document.getElementById('reportContent');
+          showNotification("Folga removida com sucesso", "success");
+          await updateLeavesCalendar();
+        } catch (error) {
+          console.error("Erro ao remover folga:", error);
+          showNotification("Erro ao remover folga", "error");
+        }
+      }
 
-        content.innerHTML = `
+      // Gerar relatório
+      async function generateReport(event) {
+        event.preventDefault();
+
+        const type = document.getElementById("reportType").value;
+        const date = document.getElementById("reportDate").value;
+        const storeId = document.getElementById("reportStore").value;
+
+        try {
+          let url = `/api/reports?type=${type}&date=${date}`;
+          if (storeId) {
+            url += `&store_id=${storeId}`;
+          }
+
+          const response = await fetch(url, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          });
+
+          if (!response.ok) throw new Error("Erro ao gerar relatório");
+
+          const report = await response.json();
+          const content = document.getElementById("reportContent");
+
+          content.innerHTML = `
             <div class="report-header">
-                <h2>Relatório ${type === 'daily' ? 'Diário' : type === 'weekly' ? 'Semanal' : 'Mensal'}</h2>
-                <p>Período: ${new Date(report.period.start).toLocaleDateString()} a ${new Date(report.period.end).toLocaleDateString()}</p>
+                <h2>Relatório ${
+                  type === "daily"
+                    ? "Diário"
+                    : type === "weekly"
+                    ? "Semanal"
+                    : "Mensal"
+                }</h2>
+                <p>Período: ${new Date(
+                  report.period.start
+                ).toLocaleDateString()} a ${new Date(
+            report.period.end
+          ).toLocaleDateString()}</p>
             </div>
 
             <div class="report-summary">
                 <div class="summary-card">
                     <div class="summary-icon">📊</div>
-                    <div class="summary-value">${report.summary.totalTasks}</div>
+                    <div class="summary-value">${
+                      report.summary.totalTasks
+                    }</div>
                     <div class="summary-label">Total de Tarefas</div>
                 </div>
                 <div class="summary-card">
                     <div class="summary-icon">✅</div>
-                    <div class="summary-value">${report.summary.totalCompleted}</div>
+                    <div class="summary-value">${
+                      report.summary.totalCompleted
+                    }</div>
                     <div class="summary-label">Concluídas</div>
                 </div>
                 <div class="summary-card">
                     <div class="summary-icon">⏳</div>
-                    <div class="summary-value">${report.summary.totalInProgress}</div>
+                    <div class="summary-value">${
+                      report.summary.totalInProgress
+                    }</div>
                     <div class="summary-label">Em Andamento</div>
                 </div>
                 <div class="summary-card">
                     <div class="summary-icon">⏸️</div>
-                    <div class="summary-value">${report.summary.totalPending}</div>
+                    <div class="summary-value">${
+                      report.summary.totalPending
+                    }</div>
                     <div class="summary-label">Pendentes</div>
                 </div>
                 <div class="summary-card">
                     <div class="summary-icon">🏖️</div>
-                    <div class="summary-value">${report.summary.totalLeaves}</div>
+                    <div class="summary-value">${
+                      report.summary.totalLeaves
+                    }</div>
                     <div class="summary-label">Folgas</div>
                 </div>
             </div>
@@ -1257,11 +1839,15 @@ async function removeLeave(leaveId) {
                 <div class="report-section">
                     <h3>Desempenho por Funcionário</h3>
                     <div class="employee-performance-grid">
-                        ${report.employeeStats.map(stat => `
+                        ${report.employeeStats
+                          .map(
+                            (stat) => `
                             <div class="performance-card">
                                 <div class="performance-header">
                                     <h4>${stat.employeeName}</h4>
-                                    <div class="completion-badge" style="background: ${getCompletionColor(stat.completionRate)}">
+                                    <div class="completion-badge" style="background: ${getCompletionColor(
+                                      stat.completionRate
+                                    )}">
                                         ${stat.completionRate}%
                                     </div>
                                 </div>
@@ -1284,21 +1870,33 @@ async function removeLeave(leaveId) {
                                     </div>
                                 </div>
                                 <div class="performance-progress">
-                                    <div class="progress-bar" style="width: ${stat.completionRate}%"></div>
+                                    <div class="progress-bar" style="width: ${
+                                      stat.completionRate
+                                    }%"></div>
                                 </div>
                             </div>
-                        `).join('')}
+                        `
+                          )
+                          .join("")}
                     </div>
                 </div>
 
                 <div class="report-section">
                     <h3>Análise por Tarefa</h3>
                     <div class="tasks-analysis-grid">
-                        ${report.taskStats.map(stat => `
-                            <div class="task-analysis-card ${stat.isFixed ? 'fixed-task' : ''}">
+                        ${report.taskStats
+                          .map(
+                            (stat) => `
+                            <div class="task-analysis-card ${
+                              stat.isFixed ? "fixed-task" : ""
+                            }">
                                 <div class="task-analysis-header">
                                     <h4>${stat.taskName}</h4>
-                                    ${stat.isFixed ? '<span class="fixed-badge">Fixa</span>' : ''}
+                                    ${
+                                      stat.isFixed
+                                        ? '<span class="fixed-badge">Fixa</span>'
+                                        : ""
+                                    }
                                 </div>
                                 <div class="task-analysis-stats">
                                     <div class="stat-row">
@@ -1315,85 +1913,208 @@ async function removeLeave(leaveId) {
                                     </div>
                                 </div>
                                 <div class="assigned-employees">
-                                    ${stat.employees.map(emp => `
+                                    ${stat.employees
+                                      .map(
+                                        (emp) => `
                                         <span class="employee-chip">${emp}</span>
-                                    `).join('')}
+                                    `
+                                      )
+                                      .join("")}
                                 </div>
                             </div>
-                        `).join('')}
+                        `
+                          )
+                          .join("")}
                     </div>
                 </div>
             </div>
         `;
-    } catch (error) {
-        console.error('Erro ao gerar relatório:', error);
-        showNotification('Erro ao gerar relatório', 'error');
-    }
-}
-
-// Função auxiliar para cor baseada na taxa de conclusão
-function getCompletionColor(rate) {
-    if (rate >= 80) return '#28a745';
-    if (rate >= 50) return '#ffc107';
-    return '#dc3545';
-}
-        // Configurar event listeners
-        function setupEventListeners() {
-            // Tabs
-            document.querySelectorAll('.tab-button').forEach(button => {
-                button.addEventListener('click', () => {
-                    const tabId = button.dataset.tab;
-                    
-                    document.querySelectorAll('.tab-button').forEach(b => 
-                        b.classList.remove('active'));
-                    document.querySelectorAll('.tab-content').forEach(c => 
-                        c.classList.remove('active'));
-                    
-                    button.classList.add('active');
-                    document.getElementById(tabId).classList.add('active');
-
-                    // Carregar dados específicos da tab
-                    if (tabId === 'fixed-tasks') loadFixedTasks();
-                    if (tabId === 'leaves') updateLeavesCalendar();
-                });
-            });
-
-            // Forms
-            document.getElementById('employeeForm').addEventListener('submit', addEmployee);
-            document.getElementById('fixedTaskForm').addEventListener('submit', addFixedTask);
-            document.getElementById('leaveForm').addEventListener('submit', addLeave);
-            document.getElementById('reportForm').addEventListener('submit', generateReport);
-
-            // Calendário
-            document.getElementById('calendarMonth').addEventListener('change', updateLeavesCalendar);
-            document.getElementById('calendarEmployee').addEventListener('change', updateLeavesCalendar);
+        } catch (error) {
+          console.error("Erro ao gerar relatório:", error);
+          showNotification("Erro ao gerar relatório", "error");
         }
+      }
 
-        // Sistema de notificações
-        function showNotification(message, type = 'info') {
-            let notification = document.getElementById('notification');
-            if (!notification) {
-                notification = document.createElement('div');
-                notification.id = 'notification';
-                document.body.appendChild(notification);
+      // Função para visualizar tarefas do funcionário
+      async function viewEmployeeTasks(employeeId) {
+        try {
+          const date = new Date().toISOString().split("T")[0];
+          const response = await fetch(
+            `/api/employees/${employeeId}/tasks?date=${date}`,
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
             }
+          );
 
-            notification.className = `notification ${type}`;
-            notification.textContent = message;
-            notification.style.display = 'block';
+          if (!response.ok) throw new Error("Erro ao carregar tarefas");
 
-            setTimeout(() => {
-                notification.style.display = 'none';
-            }, 3000);
+          const tasks = await response.json();
+          const employee = employees.find((emp) => emp.id === employeeId);
+
+          // Criar modal para mostrar as tarefas
+          const modalHtml = `
+            <div id="taskModal" class="modal" style="display: block;">
+                <div class="modal-content">
+                    <h3>Tarefas de ${employee.name}</h3>
+                    <div class="task-list">
+                        ${
+                          tasks.length > 0
+                            ? tasks
+                                .map(
+                                  (task) => `
+                            <div class="task-item">
+                                <div class="task-info">
+                                    <span class="task-name">${task.name}</span>
+                                    <span class="task-status ${
+                                      task.status
+                                    }">${formatStatus(task.status)}</span>
+                                </div>
+                                <div class="task-type">${
+                                  task.is_fixed
+                                    ? "Tarefa Fixa"
+                                    : "Tarefa Normal"
+                                }</div>
+                            </div>
+                        `
+                                )
+                                .join("")
+                            : "<p>Nenhuma tarefa encontrada para hoje.</p>"
+                        }
+                    </div>
+                    <div class="modal-footer">
+                        <button onclick="closeTaskModal()" class="btn">Fechar</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+          // Adicionar modal ao corpo do documento
+          document.body.insertAdjacentHTML("beforeend", modalHtml);
+
+          // Adicionar evento para fechar modal clicando fora
+          document
+            .getElementById("taskModal")
+            .addEventListener("click", function (e) {
+              if (e.target === this) closeTaskModal();
+            });
+        } catch (error) {
+          console.error("Erro ao carregar tarefas:", error);
+          showNotification("Erro ao carregar tarefas", "error");
+        }
+      }
+
+      // Função auxiliar para formatar status
+      function formatStatus(status) {
+        const statusMap = {
+          pendente: "Pendente",
+          "em-andamento": "Em Andamento",
+          concluido: "Concluído",
+        };
+        return statusMap[status] || status;
+      }
+
+      // Função para fechar o modal
+      function closeTaskModal() {
+        const modal = document.getElementById("taskModal");
+        if (modal) {
+          modal.remove();
+        }
+      }
+
+      // Função auxiliar para cor baseada na taxa de conclusão
+      function getCompletionColor(rate) {
+        if (rate >= 80) return "#28a745";
+        if (rate >= 50) return "#ffc107";
+        return "#dc3545";
+      }
+      // Configurar event listeners
+      function setupEventListeners() {
+        // Tabs
+        document.querySelectorAll(".tab-button").forEach((button) => {
+          button.addEventListener("click", () => {
+            const tabId = button.dataset.tab;
+
+            document
+              .querySelectorAll(".tab-button")
+              .forEach((b) => b.classList.remove("active"));
+            document
+              .querySelectorAll(".tab-content")
+              .forEach((c) => c.classList.remove("active"));
+
+            button.classList.add("active");
+            document.getElementById(tabId).classList.add("active");
+
+            // Carregar dados específicos da tab
+            if (tabId === "fixed-tasks") loadFixedTasks();
+            if (tabId === "leaves") updateLeavesCalendar();
+          });
+        });
+
+        // Forms
+        document
+          .getElementById("employeeForm")
+          .addEventListener("submit", addEmployee);
+        document
+          .getElementById("fixedTaskForm")
+          .addEventListener("submit", addFixedTask);
+        document
+          .getElementById("leaveForm")
+          .addEventListener("submit", addLeave);
+        document
+          .getElementById("reportForm")
+          .addEventListener("submit", generateReport);
+        document
+          .getElementById("storeForm")
+          .addEventListener("submit", addStore);
+
+        // Filtro de lojas
+        document
+          .getElementById("filterStore")
+          ?.addEventListener("change", loadEmployees);
+
+        // Calendário
+        document
+          .getElementById("calendarMonth")
+          .addEventListener("change", updateLeavesCalendar);
+        document
+          .getElementById("calendarEmployee")
+          .addEventListener("change", updateLeavesCalendar);
+
+        const filterStore = document.getElementById("filterStore");
+        if (filterStore) {
+          filterStore.addEventListener("change", () => {
+            loadEmployees();
+          });
+        }
+      }
+
+      // Sistema de notificações
+      function showNotification(message, type = "info") {
+        let notification = document.getElementById("notification");
+        if (!notification) {
+          notification = document.createElement("div");
+          notification.id = "notification";
+          document.body.appendChild(notification);
         }
 
-        function logout() {
-            localStorage.removeItem('token');
-            window.location.href = '/login.html';
-        }
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        notification.style.display = "block";
 
-        // Inicializar aplicação
-        init();
+        setTimeout(() => {
+          notification.style.display = "none";
+        }, 3000);
+      }
+
+      function logout() {
+        localStorage.removeItem("token");
+        window.location.href = "/login.html";
+      }
+
+      // Inicializar aplicação
+      init();
     </script>
-</body>
+  </body>
 </html>

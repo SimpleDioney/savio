@@ -450,14 +450,33 @@
         transform: translateY(-2px);
     }
 
-    .current-user-badge {
-        background: var(--accent);
-        color: white;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 0.8em;
-        margin-left: 8px;
-    }
+    .store-badge {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    margin-left: 8px;
+    border: 1px solid var(--text-secondary);
+}
+
+.current-user-badge {
+    background: var(--accent);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    margin-left: 8px;
+}
+
+.employee-name {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
 
     .employee-card {
         background: var(--bg-secondary);
@@ -482,12 +501,7 @@
         align-items: center;
     }
 
-    .employee-name {
-        font-size: 1.2em;
-        font-weight: bold;
-        display: flex;
-        align-items: center;
-    }
+    
 
     .employee-task-count {
         font-size: 0.9em;
@@ -532,6 +546,42 @@
         opacity: 0.7;
         cursor: not-allowed;
     }
+
+.store-badge {
+    background: var(--accent);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+}
+
+.task-item {
+    background: var(--bg-primary);
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start; /* Mudado para flex-start para alinhar no topo */
+}
+
+.task-info {
+    display: flex;
+    gap: 0.75rem;
+    flex: 1;
+}
+
+.task-name {
+    word-break: break-word; /* Força a quebra de palavra */
+    white-space: pre-line; /* Mantém as quebras de linha do texto */
+    line-height: 1.4;
+    flex: 1;
+}
+
+.task-controls {
+    flex-shrink: 0;
+    margin-left: 1rem;
+}
     </style>
 </head>
 <body>
@@ -563,6 +613,12 @@
                     <option value="pendente">Pendente</option>
                     <option value="em_andamento">Em Andamento</option>
                     <option value="concluido">Concluído</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filterStore">Loja:</label>
+                <select id="filterStore">
+                    <option value="">Todas as Lojas</option>
                 </select>
             </div>
             <div class="filter-group">
@@ -644,6 +700,7 @@
         let currentUser = null;
         let employees = [];
         let tasks = [];
+        let stores = [];
         let selectedDate = new Date().toISOString().split('T')[0];
         
         // Funções de utilidade
@@ -664,20 +721,89 @@
             window.location.href = '/login.html';
         }
 
+        // Função para carregar lojas
+async function loadStores() {
+    try {
+        const response = await fetch('/api/stores', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+
+        if (!response.ok) throw new Error('Erro ao carregar lojas');
+
+        stores = await response.json();
+        updateStoreSelects();
+    } catch (error) {
+        console.error('Erro ao carregar lojas:', error);
+        showNotification('Erro ao carregar lojas', 'error');
+    }
+}
+
+// Função para atualizar selects de loja
+function updateStoreSelects() {
+    const filterStore = document.getElementById('filterStore');
+    const taskStore = document.getElementById('taskStore');
+    
+    const storeOptions = stores
+        .filter(store => store.active)
+        .map(store => `<option value="${store.id}">${store.name}</option>`)
+        .join('');
+
+    if (filterStore) {
+        filterStore.innerHTML = '<option value="">Todas as Lojas</option>' + storeOptions;
+    }
+    if (taskStore) {
+        taskStore.innerHTML = '<option value="">Selecione uma Loja</option>' + storeOptions;
+    }
+}
+
         // Funções do modal
         function showAddTaskModal() {
-            document.getElementById('taskModal').style.display = 'block';
-            document.getElementById('taskName').focus();
-        }
+    const modal = document.getElementById('taskModal');
+    const modalContent = modal.querySelector('.modal-content');
 
-        function closeTaskModal() {
-            document.getElementById('taskModal').style.display = 'none';
-            document.getElementById('taskName').value = '';
-            document.getElementById('taskDescription').value = '';
-            document.getElementById('taskPriority').value = '1';
-            document.getElementById('assignedTo').value = '';
-            document.getElementById('isFixed').checked = false;
+    // Atualizar o HTML do modal para incluir seleção de loja para admin
+    if (currentUser.isAdmin) {
+        // Verificar se o elemento de loja já existe para evitar duplicação
+        if (!modalContent.querySelector('#taskStore')) {
+            const storeSelect = document.createElement('div');
+            storeSelect.className = 'form-group';
+            storeSelect.innerHTML = `
+                <label for="taskStore">Loja *</label>
+                <select id="taskStore" required>
+                    <option value="">Selecione uma loja</option>
+                    ${stores
+                        .filter(store => store.active)
+                        .map(store => `
+                            <option value="${store.id}">${store.name}</option>
+                        `).join('')}
+                </select>
+            `;
+
+            // Inserir o select de loja após o título do modal
+            const modalHeader = modalContent.querySelector('.modal-header');
+            modalHeader.insertAdjacentElement('afterend', storeSelect);
+
+            // Adicionar evento para atualizar funcionários quando a loja for selecionada
+            document.getElementById('taskStore').addEventListener('change', updateEmployeeSelect);
         }
+    }
+
+    modal.style.display = 'block';
+    
+    // Limpar campos
+    document.getElementById('taskName').value = '';
+    document.getElementById('taskDescription').value = '';
+    document.getElementById('taskPriority').value = '1';
+    if (currentUser.isAdmin) {
+        document.getElementById('taskStore').value = '';
+    }
+    document.getElementById('assignedTo').innerHTML = '<option value="">Distribuição Automática</option>';
+    document.getElementById('isFixed').checked = false;
+    
+    document.getElementById('taskName').focus();
+}
 
         function updateGreeting() {
             const hour = new Date().getHours();
@@ -710,37 +836,137 @@
             }
         }
 
+        function configureInitialInterface() {
+    const currentEmployee = employees.find(emp => emp.id === currentUser.employeeId);
+    
+    if (currentEmployee?.store_id) {
+        const filterStore = document.getElementById('filterStore');
+        if (filterStore) {
+            filterStore.value = currentEmployee.store_id;
+            
+            // Se não for admin, desabilitar a troca de loja
+            if (!currentUser.isAdmin) {
+                filterStore.disabled = true;
+            }
+            
+            // Disparar evento de change para atualizar a visualização
+            filterStore.dispatchEvent(new Event('change'));
+        }
+    }
+}
+
         // Inicialização
         async function init() {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                window.location.href = '/login.html';
-                return;
-            }
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = '/login.html';
+        return;
+    }
 
-            try {
-                currentUser = JSON.parse(atob(token.split('.')[1]));
+    try {
+        currentUser = JSON.parse(atob(token.split('.')[1]));
+        
+        updateGreeting();
+        updateDateTime();
+        
+        selectedDate = new Date().toISOString().split('T')[0];
+        document.getElementById('filterDate').value = selectedDate;
+        
+        await loadStores();
+        await loadEmployees();
+        
+        // Configurar interface inicial após carregar funcionários
+        configureInitialInterface();
+        
+        await loadTasks();
+        updateStatistics();
+        
+        // Configurar atualizações periódicas
+        setInterval(async () => {
+            await loadTasks();
+            updateStatistics();
+        }, 60000);
+
+        setupFilterEvents();
+        
+    } catch (error) {
+        console.error('Erro na inicialização:', error);
+        logout();
+    }
+}
+
+function setupFilterEvents() {
+    // Filtro de data
+    document.getElementById('filterDate').addEventListener('change', async (e) => {
+        selectedDate = e.target.value;
+        await loadTasks();
+        await loadEmployees();
+        updateStatistics();
+    });
+
+    // Filtro de status
+    document.getElementById('filterStatus').addEventListener('change', async () => {
+        await loadTasks();
+        updateStatistics();
+    });
+
+    // Filtro de loja
+    document.getElementById('filterStore').addEventListener('change', async () => {
+        await loadEmployees();
+        await loadTasks();
+        updateStatistics();
+    });
+}
+
+async function loadEmployees() {
+    try {
+        const storeId = document.getElementById('filterStore')?.value;
+        let url = `/api/employees/available?date=${selectedDate}`;
+        
+        // Se não for admin, usar a loja do usuário atual
+        if (!currentUser.isAdmin) {
+            // Buscar todos os funcionários para encontrar o usuário atual
+            const empResponse = await fetch('/api/employees', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            
+            if (!empResponse.ok) throw new Error('Erro ao carregar funcionários');
+            const allEmployees = await empResponse.json();
+            
+            // Encontrar o funcionário atual e sua loja
+            const currentEmployee = allEmployees.find(emp => emp.id === currentUser.employeeId);
+            if (currentEmployee && currentEmployee.store_id) {
+                // Atualizar o select de loja
+                const filterStore = document.getElementById('filterStore');
+                if (filterStore) {
+                    filterStore.value = currentEmployee.store_id;
+                    filterStore.disabled = true;
+                }
                 
-                updateGreeting();
-                updateDateTime();
-                
-                setInterval(updateDateTime, 1000);
-                setInterval(updateGreeting, 60000);
-
-                document.getElementById('filterDate').value = selectedDate;
-                await loadEmployees();
-                await loadTasks();
-                updateStatistics();
-
-                setInterval(async () => {
-                    await loadTasks();
-                    updateStatistics();
-                }, 120000);
-            } catch (error) {
-                console.error('Erro na inicialização:', error);
-                logout();
+                url += `&store_id=${currentEmployee.store_id}`;
             }
+        } else if (storeId) {
+            url += `&store_id=${storeId}`;
         }
+
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+
+        if (!response.ok) throw new Error('Erro ao carregar funcionários');
+
+        employees = await response.json();
+        updateEmployeeSelect();
+        renderTaskGrid();
+    } catch (error) {
+        console.error('Erro ao carregar funcionários:', error);
+        showNotification('Erro ao carregar funcionários', 'error');
+    }
+}
 
 
 // Adicionar função para atualizar a saudação
@@ -769,29 +995,25 @@ function configureUserInterface() {
         el.style.display = currentUser.isAdmin ? 'block' : 'none';
     });
 }
-        // Carregar funcionários disponíveis
-        async function loadEmployees() {
-            try {
-                const response = await fetch(`/api/employees/available?date=${selectedDate}`, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
-                
-                if (!response.ok) throw new Error('Erro ao carregar funcionários');
-                
-                employees = await response.json();
-                updateEmployeeSelect();
-                renderTaskGrid();
+function updateEmployeesByStore() {
+    const storeId = document.getElementById('taskStore').value;
+    const assignedTo = document.getElementById('assignedTo');
+    
+    assignedTo.innerHTML = '<option value="">Distribuição Automática</option>';
+    
+    const filteredEmployees = employees.filter(emp => 
+        !emp.on_leave && 
+        (!storeId || emp.store_id.toString() === storeId)
+    );
 
-                // Atualizar status de trabalho a cada minuto
-                setInterval(checkWorkingStatus, 60000);
-            } catch (error) {
-                console.error('Erro ao carregar funcionários:', error);
-                showNotification('Erro ao carregar funcionários', 'error');
-            }
-        }
-
+    filteredEmployees.forEach(emp => {
+        assignedTo.innerHTML += `
+            <option value="${emp.id}">
+                ${emp.name} (${emp.task_count || 0} tarefas)
+            </option>
+        `;
+    });
+}
         function checkWorkingStatus() {
             const now = new Date();
             const currentTime = now.getHours().toString().padStart(2, '0') + ':' + 
@@ -807,15 +1029,49 @@ function configureUserInterface() {
         }
 
         // Carregar tarefas
-        async function loadTasks() {
+        // Função principal para atualizar estatísticas
+function updateStatistics() {
+    const filteredTasks = tasks;
+    const totalTasks = filteredTasks.length;
+    const completedTasks = filteredTasks.filter(t => t.status === 'concluido').length;
+    const activeEmployees = employees.filter(e => !e.on_leave).length;
+
+    document.getElementById('totalTasks').textContent = totalTasks;
+    document.getElementById('completedTasks').textContent = completedTasks;
+    document.getElementById('activeEmployees').textContent = activeEmployees;
+}
+
+// Modificar a função loadTasks para garantir que as estatísticas sejam atualizadas
+async function loadTasks() {
     try {
         const statusFilter = document.getElementById('filterStatus').value;
         const dateFilter = document.getElementById('filterDate').value;
+        
+        // Obter store_id do filtro ou do usuário atual
+        let storeId;
+        if (!currentUser.isAdmin) {
+            // Para não-admin, sempre usar a loja do usuário
+            const currentEmployee = employees.find(emp => emp.id === currentUser.employeeId);
+            storeId = currentEmployee?.store_id;
+        } else {
+            // Para admin, usar o filtro de loja selecionado
+            storeId = document.getElementById('filterStore')?.value;
+        }
 
+        // Construir URL com os filtros
         let url = `/api/tasks?date=${dateFilter}`;
+        
+        // Sempre incluir store_id se estiver definido
+        if (storeId) {
+            url += `&store_id=${storeId}`;
+        }
+        
+        // Adicionar filtro de status se houver
         if (statusFilter && statusFilter !== 'all') {
             url += `&status=${statusFilter}`;
         }
+
+        
 
         const response = await fetch(url, {
             headers: {
@@ -823,9 +1079,13 @@ function configureUserInterface() {
             }
         });
 
-        if (!response.ok) throw new Error('Erro ao carregar tarefas');
+        if (!response.ok) {
+            throw new Error('Erro ao carregar tarefas');
+        }
 
         tasks = await response.json();
+        
+        
         renderTaskGrid();
         updateStatistics();
     } catch (error) {
@@ -833,38 +1093,71 @@ function configureUserInterface() {
         showNotification('Erro ao carregar tarefas', 'error');
     }
 }
-        // Atualizar select de funcionários
-        function updateEmployeeSelect() {
-            const select = document.getElementById('assignedTo');
-            const now = new Date();
-            const currentTime = now.getHours().toString().padStart(2, '0') + ':' + 
-                              now.getMinutes().toString().padStart(2, '0');
 
-            select.innerHTML = '<option value="">Distribuição Automática</option>';
-            
-            employees
-                .filter(emp => 
-                    !emp.on_leave && 
-                    currentTime >= emp.work_start && 
-                    currentTime <= emp.work_end
-                )
-                .forEach(emp => {
-                    select.innerHTML += `
-                        <option value="${emp.id}">
-                            ${emp.name} (${emp.task_count || 0} tarefas)
-                        </option>
-                    `;
-                });
+        // Atualizar select de funcionários
+        async function updateEmployeeSelect() {
+    try {
+        const select = document.getElementById('assignedTo');
+        select.innerHTML = '<option value="">Distribuição Automática</option>';
+
+        // Determinar a loja correta
+        let storeId;
+        if (currentUser.isAdmin) {
+            storeId = document.getElementById('taskStore')?.value;
+            if (!storeId) {
+                return; // Se admin não selecionou loja, não carregar funcionários
+            }
+        } else {
+            const currentEmployee = employees.find(emp => emp.id === currentUser.employeeId);
+            storeId = currentEmployee?.store_id;
         }
-        
+
+        if (!storeId) {
+            showNotification('Selecione uma loja primeiro', 'warning');
+            return;
+        }
+
+        const now = new Date();
+        const currentTime = now.getHours().toString().padStart(2, '0') + ':' + 
+                          now.getMinutes().toString().padStart(2, '0');
+
+        // Filtrar funcionários da loja selecionada
+        const availableEmployees = employees.filter(emp => 
+            emp.store_id === parseInt(storeId) && 
+            !emp.on_leave && 
+            currentTime >= emp.work_start && 
+            currentTime <= emp.work_end
+        );
+
+        availableEmployees.forEach(emp => {
+            select.innerHTML += `
+                <option value="${emp.id}">
+                    ${emp.name} (${emp.task_count || 0} tarefas)
+                </option>
+            `;
+        });
+    } catch (error) {
+        console.error('Erro ao atualizar select de funcionários:', error);
+        showNotification('Erro ao carregar funcionários disponíveis', 'error');
+    }
+}
+
 
         // Renderizar grid de tarefas
         function renderTaskGrid() {
     const grid = document.getElementById('taskGrid');
     grid.innerHTML = '';
 
+    // Obter o filtro de loja atual
+    const storeFilter = document.getElementById('filterStore')?.value;
+
+    // Filtrar funcionários pela loja selecionada
+    const filteredEmployees = storeFilter ? 
+        employees.filter(emp => emp.store_id === parseInt(storeFilter)) : 
+        employees;
+
     const tasksByEmployee = new Map();
-    employees.forEach(emp => {
+    filteredEmployees.forEach(emp => {
         tasksByEmployee.set(emp.id, []);
     });
 
@@ -874,16 +1167,16 @@ function configureUserInterface() {
         }
     });
 
-    // Primeiro, renderizar o card do usuário atual
-    const currentEmployee = employees.find(emp => emp.id === currentUser.employeeId);
+    // Primeiro, renderizar o card do usuário atual se estiver na loja filtrada
+    const currentEmployee = filteredEmployees.find(emp => emp.id === currentUser.employeeId);
     if (currentEmployee) {
         const currentUserTasks = tasksByEmployee.get(currentUser.employeeId) || [];
         const currentUserCard = createEmployeeCard(currentEmployee, currentUserTasks, true);
         grid.appendChild(currentUserCard);
     }
 
-    // Depois, renderizar os cards dos outros funcionários
-    employees.forEach(emp => {
+    // Depois, renderizar os cards dos outros funcionários da loja filtrada
+    filteredEmployees.forEach(emp => {
         if (emp.id !== currentUser.employeeId) {
             const employeeTasks = tasksByEmployee.get(emp.id) || [];
             const card = createEmployeeCard(emp, employeeTasks, false);
@@ -893,108 +1186,104 @@ function configureUserInterface() {
 }
 
 // Adicionar função para criar card de funcionário
+// Atualizar a parte do botão de deletar dentro da função createEmployeeCard
 function createEmployeeCard(emp, employeeTasks, isCurrentUser) {
-            const card = document.createElement('div');
-            card.className = `employee-card ${isCurrentUser ? 'current-user' : ''}`;
-            
-            if (isCurrentUser) {
-                card.style.border = '2px solid var(--accent)';
-            }
+    const card = document.createElement('div');
+    card.className = `employee-card ${isCurrentUser ? 'current-user' : ''}`;
+    
+    if (isCurrentUser) {
+        card.style.border = '2px solid var(--accent)';
+    }
 
-            const now = new Date();
-            const currentTime = now.getHours().toString().padStart(2, '0') + ':' + 
-                              now.getMinutes().toString().padStart(2, '0');
-            const isWithinWorkHours = currentTime >= emp.work_start && 
-                                    currentTime <= emp.work_end;
+    const now = new Date();
+    const currentTime = now.getHours().toString().padStart(2, '0') + ':' + 
+                      now.getMinutes().toString().padStart(2, '0');
+    const isWithinWorkHours = currentTime >= emp.work_start && 
+                            currentTime <= emp.work_end;
 
-            const completedTasks = employeeTasks.filter(t => t.status === 'concluido').length;
-            const totalTasks = employeeTasks.length;
-            const completionRate = totalTasks ? 
-                ((completedTasks / totalTasks) * 100).toFixed(0) : 0;
+    const storeName = stores.find(s => s.id === emp.store_id)?.name || 'Sem loja';
 
-            // Determine employee status
-            let statusClass, statusText, statusIcon;
-            if (emp.on_leave) {
-                statusClass = 'status-leave';
-                statusText = 'De Folga';
-            } else if (!isWithinWorkHours) {
-                statusClass = 'status-off';
-                statusText = 'Fora de Expediente';
-            } else {
-                statusClass = 'status-working';
-                statusText = 'Disponível';
-            }
+    const completedTasks = employeeTasks.filter(t => t.status === 'concluido').length;
+    const totalTasks = employeeTasks.length;
+    const completionRate = totalTasks ? 
+        ((completedTasks / totalTasks) * 100).toFixed(0) : 0;
 
-            card.innerHTML = `
-                <div class="employee-header">
-                    <div class="employee-info">
-                        <div class="employee-name">
-                            ${emp.name}
-                            ${isCurrentUser ? '<span class="current-user-badge">Você</span>' : ''}
-                        </div>
-                        <div class="work-schedule">
-                            🕒 Horário: ${emp.work_start} - ${emp.work_end}
-                        </div>
-                        <div class="employee-task-count">
-                            ${totalTasks} tarefas • ${completionRate}% concluído
-                        </div>
-                    </div>
-                    <span class="employee-status ${statusClass}">
-                        ${statusText}
-                    </span>
+    let statusClass, statusText;
+    if (emp.on_leave) {
+        statusClass = 'status-leave';
+        statusText = 'De Folga';
+    } else if (!isWithinWorkHours) {
+        statusClass = 'status-off';
+        statusText = 'Fora de Expediente';
+    } else {
+        statusClass = 'status-working';
+        statusText = 'Disponível';
+    }
+
+    card.innerHTML = `
+        <div class="employee-header">
+            <div class="employee-info">
+                <div class="employee-name">
+                    ${emp.name}
+                    ${isCurrentUser ? '<span class="current-user-badge">Você</span>' : ''}
+                    <span class="store-badge">${storeName}</span>
                 </div>
-                <div class="tasks-container">
-                    ${employeeTasks.length === 0 ? 
-                        '<div class="no-tasks">Sem tarefas atribuídas</div>' : 
-                        employeeTasks.map(task => {
-                            const canEdit = (currentUser.isAdmin || isCurrentUser) && 
-                                          isWithinWorkHours && !emp.on_leave;
-                            
-                            return `
-                                <div class="task-item ${task.is_fixed ? 'fixed' : ''} 
-                                            ${task.status === 'concluido' ? 'completed' : ''}">
-                                    <div class="task-info">
-                                        <span class="task-priority priority-${task.priority}"></span>
-                                        <div>
-                                            <div class="task-name">${task.name}</div>
-                                            ${task.description ? 
-                                                `<div class="task-description">${task.description}</div>` : 
-                                                ''}
-                                            ${task.is_fixed ? 
-                                                '<span class="task-fixed-badge">Fixa</span>' : ''}
-                                        </div>
-                                    </div>
-                                    <div class="task-controls">
-                                        <select class="task-status status-${task.status}"
-                                                onchange="updateTaskStatus(${task.id}, this.value)"
-                                                ${!canEdit ? 'disabled' : ''}>
-                                            <option value="pendente" 
-                                                ${task.status === 'pendente' ? 'selected' : ''}>
-                                                Pendente
-                                            </option>
-                                            <option value="em-andamento" 
-                                                ${task.status === 'em-andamento' ? 'selected' : ''}>
-                                                Em Andamento
-                                            </option>
-                                            <option value="concluido" 
-                                                ${task.status === 'concluido' ? 'selected' : ''}>
-                                                Concluído
-                                            </option>
-                                        </select>
-                                        ${canEdit && !task.is_fixed ? `
-                                            <button class="btn btn-danger btn-small" 
-                                                    onclick="deleteTask(${task.id})"
-                                                    title="Remover Tarefa">×</button>
-                                        ` : ''}
-                                    </div>
-                                </div>
-                            `;
-                        }).join('')}
+                <div class="work-schedule">
+                    🕒 Horário: ${emp.work_start} - ${emp.work_end}
                 </div>
-            `;
+                <div class="employee-task-count">
+                    ${totalTasks} tarefas • ${completionRate}% concluído
+                </div>
+            </div>
+            <span class="employee-status ${statusClass}">
+                ${statusText}
+            </span>
+        </div>
+        <div class="tasks-container">
+            ${employeeTasks.length === 0 ? 
+                '<div class="no-tasks">Sem tarefas atribuídas</div>' : 
+                employeeTasks.map(task => {
+                    const canEdit = (currentUser.isAdmin || isCurrentUser) && 
+                                  isWithinWorkHours && !emp.on_leave;
+                    
+                    return `
+                        <div class="task-item ${task.is_fixed ? 'fixed' : ''} 
+                                    ${task.status === 'concluido' ? 'completed' : ''}">
+                            <div class="task-info">
+                                <span class="task-priority priority-${task.priority}"></span>
+                                <div class="task-name">${task.name}</div>
+                            </div>
+                            <div class="task-controls">
+                                <select class="task-status status-${task.status}"
+                                        onchange="updateTaskStatus(${task.id}, this.value)"
+                                        ${!canEdit ? 'disabled' : ''}>
+                                    <option value="pendente" 
+                                        ${task.status === 'pendente' ? 'selected' : ''}>
+                                        Pendente
+                                    </option>
+                                    <option value="em-andamento" 
+                                        ${task.status === 'em-andamento' ? 'selected' : ''}>
+                                        Em Andamento
+                                    </option>
+                                    <option value="concluido" 
+                                        ${task.status === 'concluido' ? 'selected' : ''}>
+                                        Concluído
+                                    </option>
+                                </select>
+                                ${currentUser.isAdmin && !task.is_fixed ? `
+                                    <button class="btn btn-danger btn-small" 
+                                            onclick="deleteTask(${task.id})"
+                                            title="Remover Tarefa">×</button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+        </div>
+    `;
 
-            return card;
-        }
+    return card;
+}
 
         // Atualizar status da tarefa
         async function updateTaskStatus(taskId, status) {
@@ -1016,13 +1305,21 @@ function createEmployeeCard(emp, employeeTasks, isCurrentUser) {
             throw new Error(error.message || 'Erro ao atualizar status');
         }
 
-        await loadTasks();
+        // Atualizar a tarefa localmente
+        const taskIndex = tasks.findIndex(t => t.id === taskId);
+        if (taskIndex !== -1) {
+            tasks[taskIndex].status = status;
+            updateStatistics(); // Atualizar estatísticas imediatamente
+        }
+
+        await loadTasks(); // Recarregar todas as tarefas
         showNotification('Status atualizado com sucesso', 'success');
     } catch (error) {
         console.error('Erro ao atualizar status:', error);
         showNotification(error.message, 'error');
     }
 }
+
 
 async function getFixedTasksHistory(startDate, endDate) {
     try {
@@ -1042,89 +1339,196 @@ async function getFixedTasksHistory(startDate, endDate) {
 
         // Distribuir tarefas automaticamente
         async function distributeTasksAutomatically() {
-            const now = new Date();
-            const currentTime = now.getHours().toString().padStart(2, '0') + ':' + 
-                              now.getMinutes().toString().padStart(2, '0');
-
-            // Check if there are employees within working hours
-            const availableEmployees = employees.filter(emp => 
-                currentTime >= emp.work_start && 
-                currentTime <= emp.work_end && 
-                !emp.on_leave
-            );
-
-            if (availableEmployees.length === 0) {
-                showNotification('Não há funcionários em horário de expediente disponíveis', 'warning');
-                return;
+    try {
+        let storeId;
+        
+        if (currentUser.isAdmin) {
+            // Para admin, mostrar modal de seleção de loja
+            const selectedStore = await showStoreSelectionModal();
+            if (!selectedStore) {
+                return; // Usuário cancelou a seleção
             }
-
-            try {
-                const response = await fetch('/api/tasks/distribute', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
-
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.message || 'Erro ao distribuir tarefas');
-                }
-
-                await loadTasks();
-                updateStatistics();
-                showNotification('Tarefas distribuídas com sucesso', 'success');
-            } catch (error) {
-                console.error('Erro ao distribuir tarefas:', error);
-                showNotification(error.message, 'error');
-            }
+            storeId = selectedStore;
+        } else {
+            // Para usuário normal, usar sua própria loja
+            const currentEmployee = employees.find(emp => emp.id === currentUser.employeeId);
+            storeId = currentEmployee?.store_id;
         }
 
+        if (!storeId) {
+            showNotification('Erro: Loja não definida', 'error');
+            return;
+        }
+
+        const response = await fetch('/api/tasks/distribute', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({
+                store_id: storeId
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || 'Erro ao distribuir tarefas');
+        }
+
+        await loadTasks();
+        await loadEmployees();
+        updateStatistics();
+        showNotification(result.message, 'success');
+    } catch (error) {
+        console.error('Erro ao distribuir tarefas:', error);
+        showNotification(error.message, 'error');
+    }
+}
+
+function showStoreSelectionModal() {
+    return new Promise((resolve) => {
+        // Criar modal dinamicamente
+        const modalHtml = `
+            <div id="storeSelectionModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Selecionar Loja</h2>
+                    </div>
+                    <div class="form-group">
+                        <label for="distributeStore">Selecione a loja para distribuir as tarefas:</label>
+                        <select id="distributeStore" class="form-control">
+                            <option value="">Selecione uma loja</option>
+                            ${stores
+                                .filter(store => store.active)
+                                .map(store => `
+                                    <option value="${store.id}">${store.name}</option>
+                                `).join('')}
+                        </select>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-danger" onclick="closeStoreSelectionModal(null)">Cancelar</button>
+                        <button class="btn btn-success" onclick="confirmStoreSelection()">Confirmar</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Adicionar modal ao body
+        const modalContainer = document.createElement('div');
+        modalContainer.innerHTML = modalHtml;
+        document.body.appendChild(modalContainer);
+
+        const modal = document.getElementById('storeSelectionModal');
+        modal.style.display = 'block';
+
+        // Adicionar funções de fechamento do modal ao escopo global
+        window.closeStoreSelectionModal = (storeId) => {
+            modal.remove();
+            resolve(storeId);
+        };
+
+        window.confirmStoreSelection = () => {
+            const selectedStore = document.getElementById('distributeStore').value;
+            if (!selectedStore) {
+                showNotification('Selecione uma loja', 'warning');
+                return;
+            }
+            closeStoreSelectionModal(selectedStore);
+        };
+
+        // Fechar modal ao clicar fora
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                closeStoreSelectionModal(null);
+            }
+        };
+    });
+}
 
         // Salvar nova tarefa
         async function saveTask() {
-            const name = document.getElementById('taskName').value;
-            const description = document.getElementById('taskDescription').value;
-            const employeeId = document.getElementById('assignedTo').value;
-            const priority = document.getElementById('taskPriority').value;
-            const isFixed = document.getElementById('isFixed').checked;
+    const name = document.getElementById('taskName').value;
+    const description = document.getElementById('taskDescription').value;
+    const employeeId = document.getElementById('assignedTo').value;
+    const priority = document.getElementById('taskPriority').value;
+    const isFixed = document.getElementById('isFixed').checked;
 
-            if (!name) {
-                showNotification('Digite o nome da tarefa', 'warning');
-                return;
-            }
+    if (!name) {
+        showNotification('Digite o nome da tarefa', 'warning');
+        return;
+    }
 
-            try {
-                const response = await fetch('/api/tasks', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    },
-                    body: JSON.stringify({
-                        name,
-                        description,
-                        employeeId: employeeId || null,
-                        priority: parseInt(priority),
-                        isFixed,
-                        date: selectedDate
-                    })
-                });
-
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.message || 'Erro ao criar tarefa');
-                }
-
-                closeTaskModal();
-                await loadTasks();
-                updateStatistics();
-                showNotification('Tarefa criada com sucesso', 'success');
-            } catch (error) {
-                console.error('Erro ao salvar tarefa:', error);
-                showNotification(error.message, 'error');
-            }
+    // Determinar a loja correta
+    let storeId;
+    if (currentUser.isAdmin) {
+        storeId = document.getElementById('taskStore')?.value;
+        if (!storeId) {
+            showNotification('Selecione uma loja', 'warning');
+            return;
         }
+    } else {
+        const currentEmployee = employees.find(emp => emp.id === currentUser.employeeId);
+        storeId = currentEmployee?.store_id;
+    }
+
+    if (!storeId) {
+        showNotification('Erro: Loja não definida', 'error');
+        return;
+    }
+
+    try {
+        const taskData = {
+            name,
+            description,
+            employeeId: employeeId || null,
+            priority: parseInt(priority),
+            isFixed,
+            date: selectedDate,
+            store_id: parseInt(storeId)
+        };
+
+        const response = await fetch('/api/tasks', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify(taskData)
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || 'Erro ao criar tarefa');
+        }
+
+        // Adicionar a nova tarefa ao array local
+        const newTask = {
+            ...result,
+            store_id: parseInt(storeId)
+        };
+        tasks.push(newTask);
+        
+        // Atualizar estatísticas e interface
+        updateStatistics();
+        renderTaskGrid();
+        
+        closeTaskModal();
+        
+        // Recarregar dados
+        await Promise.all([
+            loadTasks(),
+            loadEmployees()
+        ]);
+
+        showNotification('Tarefa criada com sucesso', 'success');
+    } catch (error) {
+        console.error('Erro ao salvar tarefa:', error);
+        showNotification(error.message, 'error');
+    }
+}
 
         // Excluir tarefa
         async function deleteTask(taskId) {
@@ -1149,7 +1553,11 @@ async function getFixedTasksHistory(startDate, endDate) {
 
         if (!response.ok) throw new Error('Erro ao excluir tarefa');
 
-        await loadTasks();
+        // Remover a tarefa localmente
+        tasks = tasks.filter(t => t.id !== taskId);
+        updateStatistics(); // Atualizar estatísticas imediatamente
+        
+        await loadTasks(); // Recarregar todas as tarefas
         showNotification('Tarefa excluída com sucesso', 'success');
     } catch (error) {
         console.error('Erro ao excluir tarefa:', error);
@@ -1158,15 +1566,108 @@ async function getFixedTasksHistory(startDate, endDate) {
 }
 
         // Atualizar estatísticas
-        function updateStatistics() {
-            const totalTasks = tasks.length;
-            const completedTasks = tasks.filter(t => t.status === 'concluido').length;
-            const activeEmployees = employees.filter(e => !e.on_leave).length;
-
-            document.getElementById('totalTasks').textContent = totalTasks;
-            document.getElementById('completedTasks').textContent = completedTasks;
-            document.getElementById('activeEmployees').textContent = activeEmployees;
+        // Função atualizada para carregar tarefas
+async function loadTasks() {
+    try {
+        const statusFilter = document.getElementById('filterStatus').value;
+        const dateFilter = document.getElementById('filterDate').value;
+        
+        // Obter store_id do filtro ou do usuário atual
+        let storeId;
+        if (!currentUser.isAdmin) {
+            // Para não-admin, sempre usar a loja do usuário
+            const currentEmployee = employees.find(emp => emp.id === currentUser.employeeId);
+            storeId = currentEmployee?.store_id;
+        } else {
+            // Para admin, usar o filtro de loja selecionado
+            storeId = document.getElementById('filterStore')?.value;
         }
+
+        // Construir URL com os filtros
+        let url = `/api/tasks?date=${dateFilter}`;
+        
+        // Sempre incluir store_id se estiver definido
+        if (storeId) {
+            url += `&store_id=${storeId}`;
+        }
+        
+        // Adicionar filtro de status se houver
+        if (statusFilter && statusFilter !== 'all') {
+            url += `&status=${statusFilter}`;
+        }
+
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Erro ao carregar tarefas');
+        }
+
+        tasks = await response.json();
+        
+        renderTaskGrid();
+        updateStatistics();
+    } catch (error) {
+        console.error('Erro ao carregar tarefas:', error);
+        showNotification('Erro ao carregar tarefas', 'error');
+    }
+}
+
+// Atualizar também a função updateStatistics para considerar apenas tarefas da loja
+function updateStatistics() {
+    try {
+        // Filtrar tarefas pela loja atual
+        let storeId;
+        if (!currentUser.isAdmin) {
+            const currentEmployee = employees.find(emp => emp.id === currentUser.employeeId);
+            storeId = currentEmployee?.store_id;
+        } else {
+            storeId = document.getElementById('filterStore')?.value;
+        }
+
+        // Filtrar tarefas pela loja se houver store_id
+        const filteredTasks = storeId ? 
+            tasks.filter(task => task.store_id === parseInt(storeId)) : 
+            tasks;
+
+        // Calcular estatísticas apenas com as tarefas filtradas
+        const totalTasks = filteredTasks.length;
+        const completedTasks = filteredTasks.filter(t => t.status === 'concluido').length;
+        
+        // Filtrar funcionários ativos da loja
+        const activeEmployees = employees.filter(emp => {
+            return (!storeId || emp.store_id === parseInt(storeId)) && !emp.on_leave;
+        }).length;
+
+        // Atualizar elementos na interface
+        document.getElementById('totalTasks').textContent = totalTasks;
+        document.getElementById('completedTasks').textContent = completedTasks;
+        document.getElementById('activeEmployees').textContent = activeEmployees;
+
+    } catch (error) {
+        console.error('Erro ao atualizar estatísticas:', error);
+    }
+}
+
+function closeTaskModal() {
+    const modal = document.getElementById('taskModal');
+    modal.style.display = 'none';
+    
+    // Limpar todos os campos
+    document.getElementById('taskName').value = '';
+    document.getElementById('taskDescription').value = '';
+    document.getElementById('taskPriority').value = '1';
+    document.getElementById('assignedTo').innerHTML = '<option value="">Distribuição Automática</option>';
+    document.getElementById('isFixed').checked = false;
+    
+    // Limpar select de loja se for admin
+    if (currentUser.isAdmin && document.getElementById('taskStore')) {
+        document.getElementById('taskStore').value = '';
+    }
+}
 
         // Sistema de notificações
         function showNotification(message, type = 'info') {
