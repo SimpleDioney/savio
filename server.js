@@ -867,19 +867,19 @@ app.get("/api/tasks/fixed/history", authenticateToken, async (req, res) => {
 // Rota para distribuição automática de tarefas
 app.post('/api/tasks/distribute', authenticateToken, async (req, res) => {
     try {
-        const { store_id } = req.body;
+        const { store_id, date } = req.body;
         
-        // Ajustar para timezone de Brasília
+        // Configuração de data e hora
         const now = new Date();
-        now.setHours(now.getHours() - 3);
-        const today = now.toISOString().split('T')[0];
+        now.setHours(now.getHours() - 3); // Ajuste para horário de Brasília
+        const today = date || now.toISOString().split('T')[0];
         const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
-        // Log inicial
         console.log('Iniciando distribuição:', {
             store_id,
-            today,
-            currentTime
+            date: today,
+            currentTime,
+            serverTime: now.toISOString()
         });
 
         if (!store_id) {
@@ -888,72 +888,87 @@ app.post('/api/tasks/distribute', authenticateToken, async (req, res) => {
             });
         }
 
-        // Primeiro, verificar tarefas disponíveis
-        const tasksQuery = `
-            SELECT * FROM tasks 
-            WHERE date = ? 
-            AND store_id = ?
-            AND is_fixed = 0 
-            AND (employee_id IS NULL OR employee_id = 0)
-            ORDER BY priority DESC
-        `;
+        // Verificar permissões do usuário
+        if (!req.user.isAdmin) {
+            const userEmployee = await db.get(
+                'SELECT store_id FROM employees WHERE id = ?',
+                [req.user.employeeId]
+            );
 
-        const tasks = await db.all(tasksQuery, [today, store_id]);
+            if (!userEmployee || userEmployee.store_id !== parseInt(store_id)) {
+                return res.status(403).json({
+                    message: 'Você só pode distribuir tarefas em sua própria loja'
+                });
+            }
+        }
 
-        console.log('Tarefas encontradas:', {
-            count: tasks.length,
-            tasks: tasks
+        // Verificar existência e status da loja
+        const store = await db.get(
+            'SELECT * FROM stores WHERE id = ? AND active = 1',
+            [store_id]
+        );
+
+        if (!store) {
+            return res.status(404).json({
+                message: 'Loja não encontrada ou inativa'
+            });
+        }
+
+        // Buscar todas as tarefas não atribuídas
+        const unassignedTasks = await db.all(`
+            SELECT 
+                t.*,
+                s.name as store_name
+            FROM tasks t
+            JOIN stores s ON t.store_id = s.id
+            WHERE t.date = ? 
+            AND t.store_id = ?
+            AND t.is_fixed = 0 
+            AND (t.employee_id IS NULL OR t.employee_id = 0)
+            ORDER BY t.priority DESC, t.id ASC
+        `, [today, store_id]);
+
+        console.log('Tarefas não atribuídas:', {
+            count: unassignedTasks.length,
+            tasks: unassignedTasks
         });
 
-        if (tasks.length === 0) {
-            // Buscar todas as tarefas da loja para debug
-            const allTasks = await db.all(`
-                SELECT 
-                    t.*,
-                    e.name as employee_name
-                FROM tasks t
-                LEFT JOIN employees e ON t.employee_id = e.id
-                WHERE t.date = ? 
-                AND t.store_id = ?
-            `, [today, store_id]);
-
+        if (unassignedTasks.length === 0) {
             return res.status(400).json({
                 message: 'Não há tarefas para distribuir',
-                debug: {
-                    serverTime: new Date().toISOString(),
-                    adjustedTime: now.toISOString(),
-                    today,
-                    allTasks,
-                    query: tasksQuery
-                }
+                details: 'Todas as tarefas já estão atribuídas ou não existem tarefas para hoje'
             });
         }
 
         // Buscar funcionários disponíveis
-        const employees = await db.all(`
-            SELECT e.* 
+        const availableEmployees = await db.all(`
+            SELECT 
+                e.*,
+                s.name as store_name,
+                (
+                    SELECT COUNT(*) 
+                    FROM tasks 
+                    WHERE employee_id = e.id 
+                    AND date = ?
+                ) as current_task_count
             FROM employees e
+            JOIN stores s ON e.store_id = s.id
             LEFT JOIN leaves l ON e.id = l.employee_id AND l.date = ?
             WHERE e.active = 1 
             AND e.store_id = ?
             AND l.id IS NULL
-            AND time(?) >= time(e.work_start)
-            AND time(?) <= time(e.work_end)
-        `, [today, store_id, currentTime, currentTime]);
+            AND time(?) BETWEEN time(e.work_start) AND time(e.work_end)
+        `, [today, today, store_id, currentTime]);
 
         console.log('Funcionários disponíveis:', {
-            count: employees.length,
-            employees: employees
+            count: availableEmployees.length,
+            employees: availableEmployees
         });
 
-        if (employees.length === 0) {
+        if (availableEmployees.length === 0) {
             return res.status(400).json({
-                message: 'Não há funcionários disponíveis agora',
-                debug: {
-                    currentTime,
-                    store_id,
-                    today
-                }
+                message: 'Não há funcionários disponíveis no momento',
+                details: 'Verifique os horários de trabalho e folgas'
             });
         }
 
@@ -961,40 +976,102 @@ app.post('/api/tasks/distribute', authenticateToken, async (req, res) => {
 
         try {
             const distributions = [];
+            const taskHistory = new Map();
 
-            for (let task of tasks) {
-                // Distribuição simplificada: distribuir igualmente entre funcionários disponíveis
-                const employeeIndex = distributions.length % employees.length;
-                const employee = employees[employeeIndex];
+            // Buscar histórico recente de tarefas para cada funcionário
+            for (const emp of availableEmployees) {
+                const history = await db.all(`
+                    SELECT t.name, th.date 
+                    FROM task_history th
+                    JOIN tasks t ON th.task_id = t.id
+                    WHERE th.employee_id = ?
+                    AND th.date >= date(?, '-14 days')
+                    ORDER BY th.date DESC
+                `, [emp.id, today]);
+                taskHistory.set(emp.id, history);
+            }
 
-                await db.run(
-                    'UPDATE tasks SET employee_id = ? WHERE id = ?',
-                    [employee.id, task.id]
-                );
+            // Distribuir tarefas
+            for (const task of unassignedTasks) {
+                let bestEmployee = null;
+                let bestScore = -1;
 
-                await db.run(
-                    'INSERT INTO task_history (task_id, employee_id, date) VALUES (?, ?, ?)',
-                    [task.id, employee.id, today]
-                );
+                for (const emp of availableEmployees) {
+                    let score = 100;
+                    const history = taskHistory.get(emp.id) || [];
 
-                distributions.push({
-                    taskId: task.id,
-                    taskName: task.name,
-                    employeeId: employee.id,
-                    employeeName: employee.name
-                });
+                    // Reduzir score baseado em tarefas recentes
+                    const recentSimilarTasks = history.filter(h => 
+                        h.name === task.name && 
+                        new Date(h.date) >= new Date(today + '-14 days')
+                    ).length;
+                    score -= recentSimilarTasks * 15;
+
+                    // Reduzir score baseado em tarefas atuais
+                    score -= (emp.current_task_count || 0) * 10;
+
+                    // Bônus para funcionários com menos tarefas
+                    const minTaskCount = Math.min(...availableEmployees.map(e => e.current_task_count || 0));
+                    if ((emp.current_task_count || 0) === minTaskCount) {
+                        score += 20;
+                    }
+
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestEmployee = emp;
+                    }
+                }
+
+                if (bestEmployee) {
+                    // Atualizar tarefa
+                    await db.run(
+                        'UPDATE tasks SET employee_id = ? WHERE id = ?',
+                        [bestEmployee.id, task.id]
+                    );
+
+                    // Registrar no histórico
+                    await db.run(
+                        'INSERT INTO task_history (task_id, employee_id, date) VALUES (?, ?, ?)',
+                        [task.id, bestEmployee.id, today]
+                    );
+
+                    // Atualizar contagem de tarefas do funcionário
+                    bestEmployee.current_task_count = (bestEmployee.current_task_count || 0) + 1;
+
+                    distributions.push({
+                        taskId: task.id,
+                        taskName: task.name,
+                        employeeId: bestEmployee.id,
+                        employeeName: bestEmployee.name,
+                        score: bestScore
+                    });
+                }
             }
 
             await db.run('COMMIT');
 
+            // Preparar resposta com estatísticas
+            const stats = {
+                total: distributions.length,
+                byEmployee: Object.fromEntries(
+                    availableEmployees.map(emp => [
+                        emp.name,
+                        distributions.filter(d => d.employeeId === emp.id).length
+                    ])
+                )
+            };
+
             res.json({
+                success: true,
                 message: `${distributions.length} tarefas distribuídas com sucesso`,
                 distributions,
-                debug: {
-                    tasksCount: tasks.length,
-                    employeesCount: employees.length,
+                statistics: stats,
+                details: {
                     date: today,
-                    time: currentTime
+                    time: currentTime,
+                    store: store.name,
+                    employeesAvailable: availableEmployees.length,
+                    totalTasksDistributed: distributions.length
                 }
             });
 
@@ -1002,11 +1079,17 @@ app.post('/api/tasks/distribute', authenticateToken, async (req, res) => {
             await db.run('ROLLBACK');
             throw error;
         }
+
     } catch (error) {
         console.error('Erro na distribuição de tarefas:', error);
         res.status(500).json({
+            success: false,
             message: 'Erro ao distribuir tarefas',
-            error: error.message
+            error: error.message,
+            details: {
+                serverTime: new Date().toISOString(),
+                timezone: process.env.TZ
+            }
         });
     }
 });
