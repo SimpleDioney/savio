@@ -45,18 +45,18 @@ async function initializeDb() {
             );
 
             CREATE TABLE IF NOT EXISTS tasks (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT,
-    description TEXT,
-    employee_id INTEGER,
-    date TEXT,
-    is_fixed BOOLEAN DEFAULT FALSE,
-    status TEXT DEFAULT 'pendente',
-    priority INTEGER DEFAULT 1,
-    store_id INTEGER,
-    FOREIGN KEY (employee_id) REFERENCES employees (id),
-    FOREIGN KEY (store_id) REFERENCES stores(id)
-);
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT,
+                description TEXT,
+                employee_id INTEGER,
+                date TEXT,
+                is_fixed BOOLEAN DEFAULT FALSE,
+                status TEXT DEFAULT 'pendente',
+                priority INTEGER DEFAULT 1,
+                store_id INTEGER,
+                FOREIGN KEY (employee_id) REFERENCES employees (id),
+                FOREIGN KEY (store_id) REFERENCES stores(id)
+            );
 
             CREATE TABLE IF NOT EXISTS leaves (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -92,6 +92,20 @@ async function initializeDb() {
                 FOREIGN KEY (task_id) REFERENCES tasks (id)
             );
 
+            CREATE TABLE IF NOT EXISTS leave_requests (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                employee_id INTEGER NOT NULL,
+                status TEXT DEFAULT 'pending',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (employee_id) REFERENCES employees (id)
+            );
+
+            CREATE TABLE IF NOT EXISTS leave_request_dates (
+                request_id INTEGER,
+                date TEXT NOT NULL,
+                PRIMARY KEY (request_id, date),
+                FOREIGN KEY (request_id) REFERENCES leave_requests (id)
+            );
         `);
 
         // Adicionar store_id se não existir
@@ -433,6 +447,198 @@ app.get('/api/employees/:id/tasks', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('Erro ao buscar tarefas:', error);
         res.status(500).json({ message: 'Erro ao buscar tarefas' });
+    }
+});
+
+
+// Rotas para pedir folga
+
+// Buscar solicitações de folga
+app.get('/api/leave-requests', authenticateToken, async (req, res) => {
+    try {
+        const { month } = req.query;
+        
+        // Se não houver mês específico, usar mês atual
+        let year, monthNum;
+        if (!month) {
+            const now = new Date();
+            year = now.getFullYear();
+            monthNum = String(now.getMonth() + 1).padStart(2, '0');
+        } else {
+            [year, monthNum] = month.split('-');
+        }
+        
+        // Construir consulta SQL base - Adicionado WHERE lr.status = 'pending'
+        let query = `
+            SELECT 
+                lr.id,
+                lr.employee_id,
+                lr.status,
+                lr.created_at,
+                lrd.date,
+                e.name as employee_name
+            FROM leave_requests lr
+            JOIN leave_request_dates lrd ON lr.id = lrd.request_id
+            JOIN employees e ON lr.employee_id = e.id
+            WHERE strftime('%Y-%m', lrd.date) = ?
+            AND lr.status = 'pending'  
+        `;
+        
+        const params = [`${year}-${monthNum}`];
+
+        // Se não for admin, mostrar apenas as próprias solicitações
+        if (!req.user.isAdmin) {
+            query += ' AND lr.employee_id = ?';
+            params.push(req.user.employeeId);
+        }
+
+        // Ordenar por data de criação
+        query += ' ORDER BY lr.created_at DESC';
+
+        const requests = await db.all(query, params);
+        
+        // Agrupar datas por solicitação
+        const groupedRequests = requests.reduce((acc, curr) => {
+            if (!acc[curr.id]) {
+                acc[curr.id] = {
+                    id: curr.id,
+                    employeeId: curr.employee_id,
+                    employeeName: curr.employee_name,
+                    status: curr.status,
+                    createdAt: curr.created_at,
+                    dates: []
+                };
+            }
+            acc[curr.id].dates.push(curr.date);
+            return acc;
+        }, {});
+
+        const requestsList = Object.values(groupedRequests);
+        
+        // Mandar resposta vazia caso não haja solicitações pendentes
+        if (requestsList.length === 0) {
+            return res.json([]);
+        }
+
+        res.json(requestsList);
+    } catch (error) {
+        console.error('Erro ao buscar solicitações:', error);
+        res.status(500).json({ message: 'Erro ao buscar solicitações' });
+    }
+});
+
+// Criar nova solicitação de folga
+app.post('/api/leave-requests', authenticateToken, async (req, res) => {
+    try {
+        const { dates } = req.body;
+
+        // Verificar se as datas são válidas (sábado e domingo consecutivos)
+        if (!dates || dates.length !== 2) {
+            return res.status(400).json({ message: 'Selecione um sábado e domingo consecutivos' });
+        }
+
+        // Verificar se já existe solicitação para estas datas
+        const existingRequests = await db.get(
+            'SELECT COUNT(*) as count FROM leave_request_dates WHERE date IN (?, ?)',
+            dates
+        );
+
+        if (existingRequests.count > 0) {
+            return res.status(400).json({ message: 'Já existe uma solicitação para estas datas' });
+        }
+
+        await db.run('BEGIN TRANSACTION');
+
+        try {
+            // Criar a solicitação com status pending
+            const result = await db.run(
+                'INSERT INTO leave_requests (employee_id, status) VALUES (?, ?)',
+                [req.user.employeeId, 'pending']
+            );
+
+            // Inserir as datas
+            for (const date of dates) {
+                await db.run(
+                    'INSERT INTO leave_request_dates (request_id, date) VALUES (?, ?)',
+                    [result.lastID, date]
+                );
+            }
+
+            await db.run('COMMIT');
+
+            res.json({
+                message: 'Solicitação criada com sucesso',
+                requestId: result.lastID
+            });
+        } catch (error) {
+            await db.run('ROLLBACK');
+            throw error;
+        }
+    } catch (error) {
+        console.error('Erro ao criar solicitação:', error);
+        res.status(500).json({ message: 'Erro ao criar solicitação' });
+    }
+});
+
+// Aprovar/rejeitar solicitação (apenas admin)
+app.post('/api/leave-requests/:id/:action', authenticateToken, async (req, res) => {
+    if (!req.user.isAdmin) {
+        return res.status(403).json({ message: 'Apenas administradores podem aprovar/rejeitar solicitações' });
+    }
+
+    try {
+        const { id, action } = req.params;
+        
+        if (action !== 'approve' && action !== 'reject') {
+            return res.status(400).json({ message: 'Ação inválida' });
+        }
+
+        await db.run('BEGIN TRANSACTION');
+
+        try {
+            // Obter a solicitação e suas datas antes de processar a ação
+            const request = await db.get(
+                'SELECT employee_id FROM leave_requests WHERE id = ?',
+                [id]
+            );
+
+            const dates = await db.all(
+                'SELECT date FROM leave_request_dates WHERE request_id = ?',
+                [id]
+            );
+
+            if (action === 'approve') {
+                // Se aprovada, atualiza o status e insere as folgas
+                await db.run(
+                    'UPDATE leave_requests SET status = "approved" WHERE id = ?',
+                    [id]
+                );
+            
+                for (const { date } of dates) {
+                    await db.run(
+                        'INSERT INTO leaves (employee_id, date) VALUES (?, ?)',
+                        [request.employee_id, date]
+                    );
+                }
+                        
+            } else if (action === 'reject') {
+                // Se rejeitada, exclui a solicitação e as datas associadas
+                await db.run('DELETE FROM leave_request_dates WHERE request_id = ?', [id]);
+                await db.run('DELETE FROM leave_requests WHERE id = ?', [id]);
+            }
+
+            await db.run('COMMIT');
+            res.json({ 
+                message: `Solicitação ${action === 'approve' ? 'aprovada' : 'rejeitada e excluída'} com sucesso`,
+                dates: dates.map(d => d.date)
+            });
+        } catch (error) {
+            await db.run('ROLLBACK');
+            throw error;
+        }
+    } catch (error) {
+        console.error('Erro ao processar solicitação:', error);
+        res.status(500).json({ message: 'Erro ao processar solicitação' });
     }
 });
 

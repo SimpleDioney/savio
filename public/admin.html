@@ -659,6 +659,35 @@
         font-size: 0.8em;
         color: var(--text-secondary);
       }
+
+      .requests-grid {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.request-card {
+    background: var(--bg-secondary);
+    padding: 1rem;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.request-info {
+    flex: 1;
+}
+
+.request-dates {
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+}
+
+.request-actions {
+    display: flex;
+    gap: 0.5rem;
+}
     </style>
   </head>
   <body>
@@ -804,6 +833,13 @@
               <button type="submit" class="btn btn-success">
                 Adicionar Folga
               </button>
+
+              <div class="card">
+                <h2>Solicitações de Folga</h2>
+                <div id="leaveRequests" class="requests-grid">
+                    <!-- Preenchido via JavaScript -->
+                </div>
+            </div>
             </form>
           </div>
 
@@ -899,6 +935,127 @@
     }
 }
       
+async function loadLeaveRequests() {
+    try {
+        const currentMonth = document.getElementById('calendarMonth').value || 
+                           new Date().toISOString().slice(0, 7);
+                           
+        const response = await fetch(`/api/leave-requests?month=${currentMonth}`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        
+        if (!response.ok) throw new Error('Erro ao carregar solicitações');
+        
+        const requests = await response.json();
+        const container = document.getElementById('leaveRequests');
+        
+        if (requests.length === 0) {
+            container.innerHTML = '<p>Nenhuma solicitação pendente</p>';
+            return;
+        }
+        
+        container.innerHTML = requests
+            .filter(req => req.status === 'pending') // Mostrar apenas pendentes
+            .map(req => `
+                <div class="request-card">
+                    <div class="request-info">
+                        <div class="request-employee">
+                            <strong>${req.employeeName}</strong>
+                        </div>
+                        <div class="request-dates">
+                            ${req.dates.map(date => 
+                                new Date(date).toLocaleDateString('pt-BR', {
+                                    weekday: 'long',
+                                    day: 'numeric',
+                                    month: 'long'
+                                })
+                            ).join('<br>')}
+                        </div>
+                        <div class="request-status">
+                            Status: ${formatRequestStatus(req.status)}
+                        </div>
+                    </div>
+                    <div class="request-actions">
+                        <button class="btn btn-success" 
+                                onclick="approveLeaveRequest(${req.id})">
+                            Aprovar
+                        </button>
+                        <button class="btn btn-danger" 
+                                onclick="rejectLeaveRequest(${req.id})">
+                            Rejeitar
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        
+    } catch (error) {
+        console.error('Erro:', error);
+        showNotification('Erro ao carregar solicitações', 'error');
+    }
+}
+
+function formatRequestStatus(status) {
+    const statusMap = {
+        'pending': 'Pendente',
+        'approved': 'Aprovada',
+        'rejected': 'Rejeitada'
+    };
+    return statusMap[status] || status;
+}
+
+// Dentro de setupEventListeners
+document.getElementById('calendarMonth')
+    .addEventListener('change', async (e) => {
+        await Promise.all([
+            updateLeavesCalendar(),
+            loadLeaveRequests()
+        ]);
+    });
+
+async function approveLeaveRequest(requestId) {
+    try {
+        const response = await fetch(`/api/leave-requests/${requestId}/approve`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        
+        if (!response.ok) throw new Error('Erro ao aprovar solicitação');
+        
+        showNotification('Solicitação aprovada com sucesso', 'success');
+        await loadLeaveRequests();
+    } catch (error) {
+        console.error('Erro:', error);
+        showNotification('Erro ao aprovar solicitação', 'error');
+    }
+}
+
+async function rejectLeaveRequest(requestId) {
+    if (!confirm('Tem certeza que deseja rejeitar esta solicitação?')) return;
+
+    try {
+        const response = await fetch(`/api/leave-requests/${requestId}/reject`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        
+        if (!response.ok) throw new Error('Erro ao rejeitar solicitação');
+        const result = await response.json();
+        
+        showNotification('Solicitação rejeitada com sucesso', 'success');
+        await loadLeaveRequests();
+        await updateLeavesCalendar(); // Atualizar calendário após rejeição
+    } catch (error) {
+        console.error('Erro:', error);
+        showNotification('Erro ao rejeitar solicitação', 'error');
+    }
+}
+
       // Carregar lojas
       async function loadStores() {
         try {
@@ -2048,7 +2205,7 @@
 
             // Carregar dados específicos da tab
             if (tabId === "fixed-tasks") loadFixedTasks();
-            if (tabId === "leaves") updateLeavesCalendar();
+            if (tabId === "leaves") updateLeavesCalendar(), loadLeaveRequests();
           });
         });
 
