@@ -1419,6 +1419,22 @@ async function getFixedTasksHistory(startDate, endDate) {
             return;
         }
 
+        // Primeiro, verificar se há tarefas não atribuídas
+        const tasksResponse = await fetch(`/api/tasks?date=${selectedDate}&store_id=${storeId}`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+
+        const tasksData = await tasksResponse.json();
+        const unassignedTasks = tasksData.filter(task => !task.employee_id);
+
+        if (unassignedTasks.length === 0) {
+            showNotification('Não há tarefas para distribuir. Crie algumas tarefas primeiro.', 'warning');
+            return;
+        }
+
+        // Prosseguir com a distribuição
         const response = await fetch('/api/tasks/distribute', {
             method: 'POST',
             headers: {
@@ -1427,22 +1443,25 @@ async function getFixedTasksHistory(startDate, endDate) {
             },
             body: JSON.stringify({
                 store_id: storeId,
-                clientTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                clientTime: new Date().toISOString()
+                date: selectedDate
             })
         });
 
         const result = await response.json();
 
         if (!response.ok) {
-            console.log('Debug info:', result.debug); // Log de debug
+            console.log('Debug info:', result.debug);
             throw new Error(result.message);
         }
 
         await loadTasks();
         await loadEmployees();
         updateStatistics();
-        showNotification(result.message, 'success');
+
+        // Mostrar resumo da distribuição
+        const message = `${result.distributions?.length || 0} tarefas distribuídas com sucesso!`;
+        showNotification(message, 'success');
+        
     } catch (error) {
         console.error('Erro ao distribuir tarefas:', error);
         showNotification(error.message, 'error');
