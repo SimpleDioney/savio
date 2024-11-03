@@ -582,6 +582,69 @@
     flex-shrink: 0;
     margin-left: 1rem;
 }
+
+.notification {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    padding: 1rem 1.5rem;
+    border-radius: 6px;
+    color: var(--text-primary);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: none;
+    animation: slideIn 0.3s ease;
+    z-index: 1000;
+    font-size: 0.95rem;
+    max-width: 350px;
+    word-wrap: break-word;
+}
+
+.notification.info {
+    background-color: var(--accent);
+}
+
+.notification.success {
+    background-color: var(--success);
+}
+
+.notification.error {
+    background-color: var(--danger);
+}
+
+.notification.warning {
+    background-color: var(--warning);
+    color: var(--bg-primary);
+}
+
+@keyframes slideIn {
+    from { 
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to { 
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from { 
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to { 
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .notification {
+        left: 1rem;
+        right: 1rem;
+        text-align: center;
+    }
+}
     </style>
 </head>
 <body>
@@ -1671,23 +1734,44 @@ function closeTaskModal() {
 
         // Sistema de notificações
         function showNotification(message, type = 'info') {
-            // Criar elemento de notificação se não existir
-            let notification = document.getElementById('notification');
-            if (!notification) {
-                notification = document.createElement('div');
-                notification.id = 'notification';
-                document.body.appendChild(notification);
-            }
+    const notification = document.getElementById('notification');
+    
+    // Remover classes anteriores
+    notification.className = 'notification';
+    
+    // Adicionar classe do tipo
+    notification.classList.add(type);
+    
+    // Definir mensagem
+    notification.textContent = message;
+    
+    // Mostrar notificação
+    notification.style.display = 'block';
+    notification.style.animation = 'slideIn 0.3s ease';
 
-            notification.className = `notification ${type}`;
-            notification.textContent = message;
-            notification.style.display = 'block';
+    // Configurar temporizador para remover
+    const timeout = type === 'error' ? 5000 : 3000; // Erros ficam visíveis por mais tempo
+    
+    setTimeout(() => {
+        // Animação de saída
+        notification.style.animation = 'slideOut 0.3s ease';
+        
+        // Remover após animação
+        setTimeout(() => {
+            notification.style.display = 'none';
+        }, 290);
+    }, timeout);
+}
 
-            // Esconder após 3 segundos
-            setTimeout(() => {
-                notification.style.display = 'none';
-            }, 3000);
-        }
+// Função para tratar erros de requisições
+async function handleApiError(response) {
+    if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Erro na operação');
+    }
+    return response;
+}
+
 
         // Event Listeners
         document.getElementById('filterDate').addEventListener('change', (e) => {
@@ -1711,5 +1795,6 @@ function closeTaskModal() {
         // Inicializar aplicação
         init();
     </script>
+<div id="notification" class="notification"></div>
 </body>
 </html>
