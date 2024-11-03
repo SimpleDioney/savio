@@ -645,6 +645,75 @@
         text-align: center;
     }
 }
+
+.calendar-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.calendar-header div {
+    padding: 10px;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+}
+
+.calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+}
+
+.calendar-day {
+    background: var(--bg-secondary);
+    padding: 10px;
+    text-align: center;
+    border-radius: 4px;
+    position: relative;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.calendar-day.empty {
+    background: transparent;
+}
+
+.calendar-day.has-leave {
+    background: var(--accent);
+    color: white;
+}
+
+.calendar-day .leave-count {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 0.8em;
+}
+
+.leave-details {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-secondary);
+    padding: 8px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    min-width: 150px;
+    white-space: nowrap;
+}
+
+.calendar-day:hover .leave-count {
+    opacity: 0.8;
+}
+
     </style>
 </head>
 <body>
@@ -658,6 +727,9 @@
                 <div id="date"></div>
                 <div id="clock"></div>
             </div>
+                <button class="btn" onclick="showLeavesModal()">
+                    Minhas Folgas
+                </button>
             <a href="/admin.html" class="btn">Administração</a>
             <button class="btn btn-danger" onclick="logout()">Sair</button>
         </div>
@@ -691,6 +763,32 @@
                 <button class="btn" onclick="showAddTaskModal()">
                     Nova Tarefa
                 </button>
+            </div>
+        </div>
+
+        <div id="leavesModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Minhas Folgas</h2>
+                </div>
+                
+                <div class="form-group">
+                    <label for="leaveMonth">Mês</label>
+                    <input type="month" id="leaveMonth" value="" />
+                </div>
+        
+                <div id="leavesCalendar">
+                    <div class="calendar-header">
+                        <!-- Dias da semana serão inseridos via JS -->
+                    </div>
+                    <div class="calendar">
+                        <!-- Dias do mês serão inseridos via JS -->
+                    </div>
+                </div>
+        
+                <div class="modal-footer">
+                    <button class="btn btn-danger" onclick="closeLeavesModal()">Fechar</button>
+                </div>
             </div>
         </div>
 
@@ -764,6 +862,7 @@
         let employees = [];
         let tasks = [];
         let stores = [];
+        let currentDate = new Date();
         let selectedDate = new Date().toISOString().split('T')[0];
         
         // Funções de utilidade
@@ -773,7 +872,86 @@
             document.getElementById('clock').textContent = now.toLocaleTimeString('pt-BR');
         }
 
+        function showLeavesModal() {
+    const modal = document.getElementById('leavesModal');
+    modal.style.display = 'block';
+    
+    // Definir mês atual
+    const now = new Date();
+    document.getElementById('leaveMonth').value = now.toISOString().slice(0, 7);
+    
+    updateLeavesCalendar();
+}
 
+function closeLeavesModal() {
+    const modal = document.getElementById('leavesModal');
+    modal.style.display = 'none';
+}
+
+async function updateLeavesCalendar() {
+    try {
+        const month = document.getElementById('leaveMonth').value;
+        const [year, monthNum] = month.split('-');
+        
+        // Buscar folgas do usuário
+        const response = await fetch(
+            `/api/employees/${currentUser.employeeId}/leaves?month=${monthNum}&year=${year}`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            }
+        );
+
+        if (!response.ok) throw new Error('Erro ao carregar folgas');
+        const leaves = await response.json();
+
+        // Montar cabeçalho do calendário
+        const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+        const headerHtml = weekDays.map(day => `<div>${day}</div>`).join('');
+        document.querySelector('.calendar-header').innerHTML = headerHtml;
+
+        // Calcular dias do mês
+        const daysInMonth = new Date(year, monthNum, 0).getDate();
+        const firstDay = new Date(year, monthNum - 1, 1).getDay();
+        
+        let calendarHtml = '';
+
+        // Adicionar dias vazios no início
+        for (let i = 0; i < firstDay; i++) {
+            calendarHtml += '<div class="calendar-day empty"></div>';
+        }
+
+        // Adicionar dias do mês
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = `${year}-${monthNum.padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const hasLeave = leaves.some(leave => leave.date === date);
+
+            calendarHtml += `
+                <div class="calendar-day ${hasLeave ? 'has-leave' : ''}">
+                    ${day}
+                    ${hasLeave ? '<div class="leave-count">✓</div>' : ''}
+                </div>
+            `;
+        }
+
+        document.querySelector('.calendar').innerHTML = calendarHtml;
+    } catch (error) {
+        console.error('Erro ao atualizar calendário:', error);
+        showNotification('Erro ao carregar folgas', 'error');
+    }
+}
+
+// Event Listeners
+document.getElementById('leaveMonth').addEventListener('change', updateLeavesCalendar);
+
+// Fechar modal ao clicar fora
+window.addEventListener('click', (e) => {
+    const modal = document.getElementById('leavesModal');
+    if (e.target === modal) {
+        closeLeavesModal();
+    }
+});
         // Atualizar relógio a cada segundo
         setInterval(updateDateTime, 1000);
         updateDateTime();
@@ -1419,22 +1597,23 @@ async function getFixedTasksHistory(startDate, endDate) {
             return;
         }
 
-        // Primeiro, verificar se há tarefas não atribuídas
-        const tasksResponse = await fetch(`/api/tasks?date=${selectedDate}&store_id=${storeId}`, {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
+        // Log das variáveis importantes
+        console.log('Debug - Distribuição:', {
+            storeId,
+            selectedDate,
+            currentUser,
+            tasks // variável global de tarefas
         });
 
-        const tasksData = await tasksResponse.json();
-        const unassignedTasks = tasksData.filter(task => !task.employee_id);
+        // Verificar tarefas não atribuídas antes da distribuição
+        const unassignedTasks = tasks.filter(task => 
+            task.store_id === parseInt(storeId) && 
+            (!task.employee_id || task.employee_id === 0) &&
+            task.date === selectedDate
+        );
 
-        if (unassignedTasks.length === 0) {
-            showNotification('Não há tarefas para distribuir. Crie algumas tarefas primeiro.', 'warning');
-            return;
-        }
+        console.log('Tarefas não atribuídas:', unassignedTasks);
 
-        // Prosseguir com a distribuição
         const response = await fetch('/api/tasks/distribute', {
             method: 'POST',
             headers: {
@@ -1443,11 +1622,17 @@ async function getFixedTasksHistory(startDate, endDate) {
             },
             body: JSON.stringify({
                 store_id: storeId,
-                date: selectedDate
+                date: selectedDate,
+                debug: {
+                    unassignedTaskCount: unassignedTasks.length,
+                    totalTaskCount: tasks.length,
+                    currentDate: new Date().toISOString(),
+                }
             })
         });
 
         const result = await response.json();
+        console.log('Resposta da distribuição:', result);
 
         if (!response.ok) {
             console.log('Debug info:', result.debug);
@@ -1457,11 +1642,7 @@ async function getFixedTasksHistory(startDate, endDate) {
         await loadTasks();
         await loadEmployees();
         updateStatistics();
-
-        // Mostrar resumo da distribuição
-        const message = `${result.distributions?.length || 0} tarefas distribuídas com sucesso!`;
-        showNotification(message, 'success');
-        
+        showNotification(result.message, 'success');
     } catch (error) {
         console.error('Erro ao distribuir tarefas:', error);
         showNotification(error.message, 'error');
