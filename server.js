@@ -796,39 +796,41 @@ app.get('/api/tasks', authenticateToken, async (req, res) => {
         const { date, status, store_id } = req.query;
         const selectedDate = date || new Date().toISOString().split('T')[0];
 
-        
-
         let query = `
             SELECT 
                 t.*,
                 e.name as employee_name,
-                s.name as store_name
+                s.name as store_name,
+                COALESCE(fts.status, t.status) as current_status
             FROM tasks t
             LEFT JOIN employees e ON t.employee_id = e.id
             LEFT JOIN stores s ON t.store_id = s.id
+            LEFT JOIN fixed_task_status fts ON t.id = fts.task_id AND fts.date = ?
             WHERE (t.date = ? OR t.is_fixed = 1)
         `;
         
-        const params = [selectedDate];
+        const params = [selectedDate, selectedDate];
 
-        // Adicionar filtro de loja
         if (store_id) {
             query += ' AND t.store_id = ?';
             params.push(store_id);
         }
 
-        // Adicionar filtro de status
         if (status) {
-            query += ' AND t.status = ?';
+            query += ' AND COALESCE(fts.status, t.status) = ?';
             params.push(status);
         }
 
-    
-
         const tasks = await db.all(query, params);
 
+        // Processar cada tarefa para garantir o status correto
+        const processedTasks = tasks.map(task => ({
+            ...task,
+            status: task.current_status,
+            original_status: task.status
+        }));
 
-        res.json(tasks);
+        res.json(processedTasks);
     } catch (error) {
         console.error('Erro ao buscar tarefas:', error);
         res.status(500).json({ 
@@ -1002,47 +1004,86 @@ app.delete("/api/tasks/:id", authenticateToken, async (req, res) => {
 });
 
 app.patch("/api/tasks/:id/status", authenticateToken, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status, date } = req.body;
-
-    // Verificar se a tarefa existe
-    const task = await db.get("SELECT * FROM tasks WHERE id = ?", [id]);
-    if (!task) {
-      return res.status(404).json({ message: "Tarefa não encontrada" });
-    }
-
-    // Permitir que admins atualizem qualquer tarefa e funcionários atualizem suas próprias tarefas
-    if (!req.user.isAdmin && task.employee_id !== req.user.employeeId) {
-      return res.status(403).json({
-        message: "Sem permissão para atualizar esta tarefa",
-      });
-    }
-
-    if (task.is_fixed) {
-      // Para tarefas fixas, atualizar ou inserir status do dia
-      const currentDate = date || new Date().toISOString().split("T")[0];
-
-      await db.run(
-        `
-                INSERT INTO fixed_task_status (task_id, date, status)
-                VALUES (?, ?, ?)
-                ON CONFLICT (task_id, date) 
-                DO UPDATE SET status = ?
-            `,
-        [id, currentDate, status, status]
+    try {
+      const { id } = req.params;
+      const { status, date } = req.body;
+  
+      // Verificar se a tarefa existe e obter suas informações
+      const task = await db.get(
+        `SELECT t.*, e.store_id as employee_store_id 
+         FROM tasks t
+         LEFT JOIN employees e ON t.employee_id = e.id 
+         WHERE t.id = ?`,
+        [id]
       );
-    } else {
-      // Para tarefas normais
-      await db.run("UPDATE tasks SET status = ? WHERE id = ?", [status, id]);
+  
+      if (!task) {
+        return res.status(404).json({ message: "Tarefa não encontrada" });
+      }
+  
+      // Verificar permissões
+      if (!req.user.isAdmin) {
+        // Se não for admin, verificar se é a própria tarefa
+        if (task.employee_id !== req.user.employeeId) {
+          return res.status(403).json({
+            message: "Sem permissão para atualizar esta tarefa"
+          });
+        }
+  
+        // Verificar se pertence à mesma loja
+        const userEmployee = await db.get(
+          'SELECT store_id FROM employees WHERE id = ?',
+          [req.user.employeeId]
+        );
+  
+        if (!userEmployee || userEmployee.store_id !== task.employee_store_id) {
+          return res.status(403).json({
+            message: "Você só pode atualizar tarefas da sua própria loja"
+          });
+        }
+      }
+  
+      // Usar a data fornecida ou a data atual
+      const taskDate = date || new Date().toISOString().split("T")[0];
+  
+      if (task.is_fixed) {
+        // Para tarefas fixas, atualizar ou inserir status do dia na tabela fixed_task_status
+        await db.run(
+          `INSERT INTO fixed_task_status (task_id, date, status)
+           VALUES (?, ?, ?)
+           ON CONFLICT (task_id, date) 
+           DO UPDATE SET status = ?`,
+          [id, taskDate, status, status]
+        );
+  
+        // Buscar o status atualizado para confirmar
+        const updatedStatus = await db.get(
+          'SELECT status FROM fixed_task_status WHERE task_id = ? AND date = ?',
+          [id, taskDate]
+        );
+  
+        return res.json({ 
+          message: "Status atualizado com sucesso",
+          currentStatus: updatedStatus.status,
+          date: taskDate
+        });
+      } else {
+        // Para tarefas regulares, atualizar diretamente na tabela tasks
+        await db.run(
+          "UPDATE tasks SET status = ? WHERE id = ?",
+          [status, id]
+        );
+  
+        return res.json({ 
+          message: "Status atualizado com sucesso",
+          currentStatus: status
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar status:", error);
+      res.status(500).json({ message: "Erro ao atualizar status" });
     }
-
-    res.json({ message: "Status atualizado com sucesso" });
-  } catch (error) {
-    console.error("Erro ao atualizar status:", error);
-    res.status(500).json({ message: "Erro ao atualizar status" });
-  }
-});
+  });
 
 app.get("/api/tasks/fixed/history", authenticateToken, async (req, res) => {
   try {
