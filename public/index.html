@@ -2105,14 +2105,7 @@ function getEmployeeWorkHours(emp, selectedDate = null) {
         const date = selectedDate ? new Date(`${selectedDate}T00:00:00`) : new Date();
         let currentDay = date.getDay(); // 0-6 (0 = Domingo)
         currentDay = currentDay === 0 ? 7 : currentDay; // Converte Domingo de 0 para 7
-        
-        console.log('Debug - Data e Dia:', {
-            selectedDate,
-            date: date.toISOString(),
-            rawDay: date.getDay(),
-            currentDay,
-            employeeName: emp.name
-        });
+      
 
         if (emp.alternative_schedule) {
             const altSchedule = typeof emp.alternative_schedule === 'string' 
@@ -2120,10 +2113,7 @@ function getEmployeeWorkHours(emp, selectedDate = null) {
                 : emp.alternative_schedule;
 
             if (altSchedule[currentDay]) {
-                console.log('Usando horário alternativo:', {
-                    day: currentDay,
-                    schedule: altSchedule[currentDay]
-                });
+                
                 return {
                     start: altSchedule[currentDay].work_start,
                     end: altSchedule[currentDay].work_end,
@@ -2241,14 +2231,6 @@ function isWithinWorkHours(emp, selectedDate = null) {
             return;
           }
 
-          // Log das variáveis importantes
-          console.log("Debug - Distribuição:", {
-            storeId,
-            selectedDate,
-            currentUser,
-            tasks, // variável global de tarefas
-          });
-
           // Verificar tarefas não atribuídas antes da distribuição
           const unassignedTasks = tasks.filter(
             (task) =>
@@ -2256,8 +2238,6 @@ function isWithinWorkHours(emp, selectedDate = null) {
               (!task.employee_id || task.employee_id === 0) &&
               task.date === selectedDate
           );
-
-          console.log("Tarefas não atribuídas:", unassignedTasks);
 
           const response = await fetch("/api/tasks/distribute", {
             method: "POST",
@@ -2277,10 +2257,8 @@ function isWithinWorkHours(emp, selectedDate = null) {
           });
 
           const result = await response.json();
-          console.log("Resposta da distribuição:", result);
 
           if (!response.ok) {
-            console.log("Debug info:", result.debug);
             throw new Error(result.message);
           }
 
