@@ -225,10 +225,7 @@ app.post("/api/login", async (req, res) => {
         employeeId: user.employee_id,
         employeeName: user.name || user.username, // Fallback para username se name não existir
       },
-      JWT_SECRET,
-      { 
-        expiresIn: '1d' // Token expira em 1 dia horas
-      }
+      JWT_SECRET
     );
 
     res.json({
