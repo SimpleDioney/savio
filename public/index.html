@@ -865,6 +865,26 @@
 .leave-item:last-child {
     border-bottom: none;
 }
+
+.alternative-badge {
+    background: var(--accent);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    margin-left: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.work-schedule {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+}
     </style>
   </head>
   <body>
@@ -1945,61 +1965,61 @@ async function loadExistingRequests(month) {
         });
       }
 
-      // Adicionar função para criar card de funcionário
-      // Atualizar a parte do botão de deletar dentro da função createEmployeeCard
       function createEmployeeCard(emp, employeeTasks, isCurrentUser) {
-        const card = document.createElement("div");
-        card.className = `employee-card ${isCurrentUser ? "current-user" : ""}`;
+    const selectedDate = document.getElementById('filterDate')?.value || new Date().toISOString().split('T')[0];
+    
+    const card = document.createElement("div");
+    card.className = `employee-card ${isCurrentUser ? "current-user" : ""}`;
 
-        if (isCurrentUser) {
-          card.style.border = "2px solid var(--accent)";
-        }
+    if (isCurrentUser) {
+        card.style.border = "2px solid var(--accent)";
+    }
 
-        const now = new Date();
-        const currentTime =
-          now.getHours().toString().padStart(2, "0") +
-          ":" +
-          now.getMinutes().toString().padStart(2, "0");
-        const isWithinWorkHours =
-          currentTime >= emp.work_start && currentTime <= emp.work_end;
+    const workHours = getEmployeeWorkHours(emp, selectedDate);
+    const isWorking = isWithinWorkHours(emp, selectedDate);
+    const storeName = stores.find((s) => s.id === emp.store_id)?.name || "Sem loja";
 
-        const storeName =
-          stores.find((s) => s.id === emp.store_id)?.name || "Sem loja";
+    const weekDays = {
+        1: 'Segunda',
+        2: 'Terça',
+        3: 'Quarta',
+        4: 'Quinta',
+        5: 'Sexta',
+        6: 'Sábado',
+        7: 'Domingo'
+    };
 
-        const completedTasks = employeeTasks.filter(
-          (t) => t.status === "concluido"
-        ).length;
-        const totalTasks = employeeTasks.length;
-        const completionRate = totalTasks
-          ? ((completedTasks / totalTasks) * 100).toFixed(0)
-          : 0;
+    const completedTasks = employeeTasks.filter((t) => t.status === "concluido").length;
+    const totalTasks = employeeTasks.length;
+    const completionRate = totalTasks ? ((completedTasks / totalTasks) * 100).toFixed(0) : 0;
 
-        let statusClass, statusText;
-        if (emp.on_leave) {
-          statusClass = "status-leave";
-          statusText = "De Folga";
-        } else if (!isWithinWorkHours) {
-          statusClass = "status-off";
-          statusText = "Fora de Expediente";
-        } else {
-          statusClass = "status-working";
-          statusText = "Disponível";
-        }
+    let statusClass, statusText;
+    if (emp.on_leave) {
+        statusClass = "status-leave";
+        statusText = "De Folga";
+    } else if (!isWorking) {
+        statusClass = "status-off";
+        statusText = "Fora de Expediente";
+    } else {
+        statusClass = "status-working";
+        statusText = "Disponível";
+    }
 
-        card.innerHTML = `
+    card.innerHTML = `
         <div class="employee-header">
             <div class="employee-info">
                 <div class="employee-name">
                     ${emp.name}
-                    ${
-                      isCurrentUser
-                        ? '<span class="current-user-badge">Você</span>'
-                        : ""
-                    }
+                    ${isCurrentUser ? '<span class="current-user-badge">Você</span>' : ""}
                     <span class="store-badge">${storeName}</span>
                 </div>
                 <div class="work-schedule">
-                    🕒 Horário: ${emp.work_start} - ${emp.work_end}
+                    🕒 Horário: ${workHours.start} - ${workHours.end}
+                    ${workHours.isAlternative ? 
+                        `<span class="alternative-badge">
+                            Horário Alternativo (${weekDays[workHours.dayOfWeek]})
+                        </span>` 
+                        : ''}
                 </div>
                 <div class="employee-task-count">
                     ${totalTasks} tarefas • ${completionRate}% concluído
@@ -2010,82 +2030,141 @@ async function loadExistingRequests(month) {
             </span>
         </div>
         <div class="tasks-container">
-            ${
-              employeeTasks.length === 0
-                ? '<div class="no-tasks">Sem tarefas atribuídas</div>'
-                : employeeTasks
-                    .map((task) => {
-                      const canEdit =
-                        (currentUser.isAdmin || isCurrentUser) &&
-                        isWithinWorkHours &&
-                        !emp.on_leave;
+            ${employeeTasks.length === 0 
+                ? '<div class="no-tasks">Sem tarefas atribuídas</div>' 
+                : employeeTasks.map((task) => {
+                    const canEdit = (currentUser.isAdmin || isCurrentUser) && 
+                                  isWorking && !emp.on_leave;
 
-                      return `
+                    return `
                         <div class="task-item ${task.is_fixed ? "fixed" : ""} 
-                                    ${
-                                      task.status === "concluido"
-                                        ? "completed"
-                                        : ""
-                                    }">
+                                    ${task.status === "concluido" ? "completed" : ""}">
                             <div class="task-info">
-                                <span class="task-priority priority-${
-                                  task.priority
-                                }"></span>
+                                <span class="task-priority priority-${task.priority}"></span>
                                 <div class="task-name">${task.name}</div>
                             </div>
                             <div class="task-controls">
-                                <select class="task-status status-${
-                                  task.status
-                                }"
-                                        onchange="updateTaskStatus(${
-                                          task.id
-                                        }, this.value)"
+                                <select class="task-status status-${task.status}"
+                                        onchange="updateTaskStatus(${task.id}, this.value)"
                                         ${!canEdit ? "disabled" : ""}>
                                     <option value="pendente" 
-                                        ${
-                                          task.status === "pendente"
-                                            ? "selected"
-                                            : ""
-                                        }>
+                                        ${task.status === "pendente" ? "selected" : ""}>
                                         Pendente
                                     </option>
                                     <option value="em-andamento" 
-                                        ${
-                                          task.status === "em-andamento"
-                                            ? "selected"
-                                            : ""
-                                        }>
+                                        ${task.status === "em-andamento" ? "selected" : ""}>
                                         Em Andamento
                                     </option>
                                     <option value="concluido" 
-                                        ${
-                                          task.status === "concluido"
-                                            ? "selected"
-                                            : ""
-                                        }>
+                                        ${task.status === "concluido" ? "selected" : ""}>
                                         Concluído
                                     </option>
                                 </select>
                                 ${
-                                  currentUser.isAdmin && !task.is_fixed
-                                    ? `
-                                    <button class="btn btn-danger btn-small" 
+                                    currentUser.isAdmin && !task.is_fixed
+                                        ? `<button 
+                                            class="btn btn-danger btn-small" 
                                             onclick="deleteTask(${task.id})"
-                                            title="Remover Tarefa">×</button>
-                                `
-                                    : ""
+                                            title="Remover Tarefa">×</button>`
+                                        : ""
                                 }
                             </div>
                         </div>
                     `;
-                    })
-                    .join("")
-            }
+                }).join("")}
         </div>
     `;
 
-        return card;
-      }
+    return card;
+}
+
+function isValidAlternativeSchedule(schedule) {
+    if (!schedule) return false;
+    try {
+        const parsed = typeof schedule === 'string' ? JSON.parse(schedule) : schedule;
+        return Object.entries(parsed).every(([day, times]) => {
+            return (
+                day >= 1 && day <= 7 &&
+                times.work_start &&
+                times.work_end &&
+                typeof times.work_start === 'string' &&
+                typeof times.work_end === 'string' &&
+                /^\d{2}:\d{2}$/.test(times.work_start) &&
+                /^\d{2}:\d{2}$/.test(times.work_end)
+            );
+        });
+    } catch (error) {
+        console.error('Erro na validação do horário alternativo:', error);
+        return false;
+    }
+}
+
+function getEmployeeWorkHours(emp, selectedDate = null) {
+    try {
+        // Criar a data no fuso horário local para evitar problemas com UTC
+        const date = selectedDate ? new Date(`${selectedDate}T00:00:00`) : new Date();
+        let currentDay = date.getDay(); // 0-6 (0 = Domingo)
+        currentDay = currentDay === 0 ? 7 : currentDay; // Converte Domingo de 0 para 7
+        
+        console.log('Debug - Data e Dia:', {
+            selectedDate,
+            date: date.toISOString(),
+            rawDay: date.getDay(),
+            currentDay,
+            employeeName: emp.name
+        });
+
+        if (emp.alternative_schedule) {
+            const altSchedule = typeof emp.alternative_schedule === 'string' 
+                ? JSON.parse(emp.alternative_schedule) 
+                : emp.alternative_schedule;
+
+            if (altSchedule[currentDay]) {
+                console.log('Usando horário alternativo:', {
+                    day: currentDay,
+                    schedule: altSchedule[currentDay]
+                });
+                return {
+                    start: altSchedule[currentDay].work_start,
+                    end: altSchedule[currentDay].work_end,
+                    isAlternative: true,
+                    dayOfWeek: currentDay
+                };
+            }
+        }
+        
+        return {
+            start: emp.work_start,
+            end: emp.work_end,
+            isAlternative: false,
+            dayOfWeek: currentDay
+        };
+    } catch (error) {
+        console.error('Erro ao processar horário alternativo:', error);
+        return {
+            start: emp.work_start,
+            end: emp.work_end,
+            isAlternative: false,
+            dayOfWeek: currentDay
+        };
+    }
+}
+
+// Modifique a função isWithinWorkHours existente para usar getEmployeeWorkHours
+function isWithinWorkHours(emp, selectedDate = null) {
+    try {
+        const workHours = getEmployeeWorkHours(emp, selectedDate);
+        const now = new Date();
+        const currentTime = now.getHours().toString().padStart(2, "0") + ":" + 
+                          now.getMinutes().toString().padStart(2, "0");
+
+        return currentTime >= workHours.start && currentTime <= workHours.end;
+    } catch (error) {
+        console.error('Erro ao verificar horário de trabalho:', error);
+        return false;
+    }
+}
+
 
       // Atualizar status da tarefa
       async function updateTaskStatus(taskId, status) {

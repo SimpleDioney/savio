@@ -25,6 +25,7 @@ async function initializeDb() {
         const hasWorkStart = tableInfo.some(col => col.name === 'work_start');
         const hasWorkEnd = tableInfo.some(col => col.name === 'work_end');
         const hasStoreId = tableInfo.some(col => col.name === 'store_id');
+        const hasAlternativeSchedule = tableInfo.some(col => col.name === 'alternative_schedule');
 
         // Criar tabelas base
         await db.exec(`
@@ -106,7 +107,25 @@ async function initializeDb() {
                 PRIMARY KEY (request_id, date),
                 FOREIGN KEY (request_id) REFERENCES leave_requests (id)
             );
+
+            CREATE TABLE IF NOT EXISTS employees (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                active BOOLEAN DEFAULT TRUE,
+                store_id INTEGER REFERENCES stores(id),
+                work_start TEXT DEFAULT "08:00",
+                work_end TEXT DEFAULT "16:20",
+                alternative_schedule TEXT
+            );
         `);
+
+        if (!hasAlternativeSchedule) {
+            try {
+                await db.exec('ALTER TABLE employees ADD COLUMN alternative_schedule TEXT');
+            } catch (e) {
+                console.log('Coluna alternative_schedule já existe ou outro erro:', e.message);
+            }
+        }
 
         // Adicionar store_id se não existir
         if (!hasStoreId) {
@@ -225,7 +244,15 @@ app.post("/api/login", async (req, res) => {
 // Rotas para funcionários
 app.post('/api/employees', authenticateToken, async (req, res) => {
     try {
-        const { name, username, password, workStart, workEnd, store_id } = req.body;
+        const { 
+            name, 
+            username, 
+            password, 
+            workStart, 
+            workEnd, 
+            store_id, 
+            alternativeSchedule 
+        } = req.body;
         
         if (!name || !username || !password || !store_id) {
             return res.status(400).json({ 
@@ -233,36 +260,55 @@ app.post('/api/employees', authenticateToken, async (req, res) => {
             });
         }
 
-        // Verificar se usuário já existe
-        const existingUser = await db.get(
-            'SELECT id FROM users WHERE username = ?',
-            [username]
-        );
-
-        if (existingUser) {
-            return res.status(400).json({ 
-                message: 'Nome de usuário já existe' 
-            });
+        // Validar formato do alternativeSchedule se fornecido
+        if (alternativeSchedule) {
+            try {
+                const schedule = typeof alternativeSchedule === 'string' ? 
+                    JSON.parse(alternativeSchedule) : alternativeSchedule;
+                
+                // Validar formato do horário alternativo
+                for (const [day, times] of Object.entries(schedule)) {
+                    const dayNum = parseInt(day);
+                    if (dayNum < 1 || dayNum > 7) {
+                        throw new Error('Dia da semana inválido');
+                    }
+                    if (!times.work_start || !times.work_end) {
+                        throw new Error('Formato de horário inválido');
+                    }
+                    // Validar formato de hora (HH:MM)
+                    const timeRegex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
+                    if (!timeRegex.test(times.work_start) || !timeRegex.test(times.work_end)) {
+                        throw new Error('Formato de hora inválido');
+                    }
+                }
+            } catch (error) {
+                return res.status(400).json({
+                    message: 'Formato de horário alternativo inválido',
+                    error: error.message
+                });
+            }
         }
 
         await db.run('BEGIN TRANSACTION');
 
         try {
-            // Inserir funcionário
+            // Inserir funcionário com horário alternativo
             const empResult = await db.run(
                 `INSERT INTO employees (
                     name, 
                     active, 
                     work_start, 
                     work_end, 
-                    store_id
-                ) VALUES (?, ?, ?, ?, ?)`,
+                    store_id,
+                    alternative_schedule
+                ) VALUES (?, ?, ?, ?, ?, ?)`,
                 [
                     name, 
                     true, 
                     workStart,
                     workEnd,
-                    store_id
+                    store_id,
+                    alternativeSchedule ? JSON.stringify(alternativeSchedule) : null
                 ]
             );
             
@@ -276,13 +322,14 @@ app.post('/api/employees', authenticateToken, async (req, res) => {
             
             await db.run('COMMIT');
             
-            // Buscar o funcionário criado com join na tabela users
+            // Buscar o funcionário criado
             const newEmployee = await db.get(
                 `SELECT 
                     e.id, 
                     e.name, 
                     e.work_start, 
-                    e.work_end, 
+                    e.work_end,
+                    e.alternative_schedule,
                     e.store_id,
                     u.username
                 FROM employees e
@@ -291,22 +338,24 @@ app.post('/api/employees', authenticateToken, async (req, res) => {
                 [empResult.lastID]
             );
             
+            // Parse do alternative_schedule para o response
+            if (newEmployee.alternative_schedule) {
+                newEmployee.alternative_schedule = JSON.parse(newEmployee.alternative_schedule);
+            }
+            
             res.json({ 
                 ...newEmployee,
                 message: 'Funcionário criado com sucesso'
             });
         } catch (error) {
-            try {
-                await db.run('ROLLBACK');
-            } catch (rollbackError) {
-                console.error('Erro ao fazer rollback:', rollbackError);
-            }
+            await db.run('ROLLBACK');
             throw error;
         }
     } catch (error) {
         console.error('Erro ao criar funcionário:', error);
         res.status(500).json({ 
-            message: 'Erro ao criar funcionário' 
+            message: 'Erro ao criar funcionário',
+            error: error.message
         });
     }
 });
@@ -707,88 +756,175 @@ app.delete('/api/employees/:id', authenticateToken, async (req, res) => {
 });
 
 app.put("/api/employees/:id", authenticateToken, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name, username, password, workStart, workEnd } = req.body;
-
-    await db.run("BEGIN TRANSACTION");
-
     try {
-      // Atualizar informações básicas do funcionário
-      await db.run(
-        "UPDATE employees SET name = ?, work_start = ?, work_end = ? WHERE id = ?",
-        [name, workStart || "09:00", workEnd || "18:00", id]
-      );
+        const { id } = req.params;
+        const { 
+            name, 
+            username, 
+            password, 
+            workStart, 
+            workEnd,
+            alternativeSchedule 
+        } = req.body;
 
-      // Se fornecido username ou password, atualizar usuário
-      if (username || password) {
-        let query = "UPDATE users SET";
-        const params = [];
-
-        if (username) {
-          query += " username = ?";
-          params.push(username);
+        // Validar alternativeSchedule se fornecido
+        if (alternativeSchedule) {
+            try {
+                const schedule = typeof alternativeSchedule === 'string' ? 
+                    JSON.parse(alternativeSchedule) : alternativeSchedule;
+                
+                for (const [day, times] of Object.entries(schedule)) {
+                    const dayNum = parseInt(day);
+                    if (dayNum < 1 || dayNum > 7) {
+                        throw new Error('Dia da semana inválido');
+                    }
+                    if (!times.work_start || !times.work_end) {
+                        throw new Error('Formato de horário inválido');
+                    }
+                    const timeRegex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
+                    if (!timeRegex.test(times.work_start) || !timeRegex.test(times.work_end)) {
+                        throw new Error('Formato de hora inválido');
+                    }
+                }
+            } catch (error) {
+                return res.status(400).json({
+                    message: 'Formato de horário alternativo inválido',
+                    error: error.message
+                });
+            }
         }
 
-        if (password) {
-          const hashedPassword = await bcrypt.hash(password, 10);
-          query += username ? ", password = ?" : " password = ?";
-          params.push(hashedPassword);
+        await db.run("BEGIN TRANSACTION");
+
+        try {
+            // Atualizar informações do funcionário
+            await db.run(
+                `UPDATE employees 
+                 SET name = ?, 
+                     work_start = ?, 
+                     work_end = ?,
+                     alternative_schedule = ?
+                 WHERE id = ?`,
+                [
+                    name,
+                    workStart || "09:00",
+                    workEnd || "18:00",
+                    alternativeSchedule ? JSON.stringify(alternativeSchedule) : null,
+                    id
+                ]
+            );
+
+            // Atualizar usuário se necessário
+            if (username || password) {
+                let query = "UPDATE users SET";
+                const params = [];
+
+                if (username) {
+                    query += " username = ?";
+                    params.push(username);
+                }
+
+                if (password) {
+                    const hashedPassword = await bcrypt.hash(password, 10);
+                    query += username ? ", password = ?" : " password = ?";
+                    params.push(hashedPassword);
+                }
+
+                query += " WHERE employee_id = ?";
+                params.push(id);
+
+                await db.run(query, params);
+            }
+
+            await db.run("COMMIT");
+
+            // Buscar funcionário atualizado
+            const updatedEmployee = await db.get(
+                `SELECT 
+                    e.*, 
+                    u.username 
+                 FROM employees e 
+                 LEFT JOIN users u ON e.id = u.employee_id 
+                 WHERE e.id = ?`,
+                [id]
+            );
+
+            // Parse do alternative_schedule para o response
+            if (updatedEmployee.alternative_schedule) {
+                updatedEmployee.alternative_schedule = JSON.parse(updatedEmployee.alternative_schedule);
+            }
+
+            res.json({
+                ...updatedEmployee,
+                message: "Funcionário atualizado com sucesso"
+            });
+        } catch (error) {
+            await db.run("ROLLBACK");
+            throw error;
         }
-
-        query += " WHERE employee_id = ?";
-        params.push(id);
-
-        await db.run(query, params);
-      }
-
-      await db.run("COMMIT");
-      res.json({ message: "Funcionário atualizado com sucesso" });
     } catch (error) {
-      await db.run("ROLLBACK");
-      throw error;
+        console.error("Erro ao atualizar funcionário:", error);
+        res.status(500).json({ 
+            message: "Erro ao atualizar funcionário",
+            error: error.message 
+        });
     }
-  } catch (error) {
-    console.error("Erro ao atualizar funcionário:", error);
-    res.status(500).json({ message: "Erro ao atualizar funcionário" });
-  }
 });
 
-app.get(
-  "/api/employees/:id/working-status",
-  authenticateToken,
-  async (req, res) => {
+app.get("/api/employees/:id/working-status", authenticateToken, async (req, res) => {
     try {
-      const { id } = req.params;
-      const employee = await db.get(
-        "SELECT work_start, work_end FROM employees WHERE id = ?",
-        [id]
-      );
+        const { id } = req.params;
+        const employee = await db.get(
+            "SELECT work_start, work_end, alternative_schedule FROM employees WHERE id = ?",
+            [id]
+        );
 
-      if (!employee) {
-        return res.status(404).json({ message: "Funcionário não encontrado" });
-      }
+        if (!employee) {
+            return res.status(404).json({ message: "Funcionário não encontrado" });
+        }
 
-      const now = new Date();
-      const currentTime = `${now.getHours().toString().padStart(2, "0")}:${now
-        .getMinutes()
-        .toString()
-        .padStart(2, "0")}`;
+        const now = new Date();
+        const currentDay = now.getDay() || 7; // 0-6 (Domingo = 0) para 1-7 (Domingo = 7)
+        const currentTime = `${now.getHours().toString().padStart(2, "0")}:${now
+            .getMinutes()
+            .toString()
+            .padStart(2, "0")}`;
 
-      const isWithinHours =
-        currentTime >= employee.work_start && currentTime <= employee.work_end;
+        let workStart = employee.work_start;
+        let workEnd = employee.work_end;
 
-      res.json({
-        isWorking: isWithinHours,
-        workStart: employee.work_start,
-        workEnd: employee.work_end,
-      });
+        // Verificar se há horário alternativo para o dia atual
+        if (employee.alternative_schedule) {
+            try {
+                const alternativeSchedule = JSON.parse(employee.alternative_schedule);
+                if (alternativeSchedule[currentDay]) {
+                    workStart = alternativeSchedule[currentDay].work_start;
+                    workEnd = alternativeSchedule[currentDay].work_end;
+                }
+            } catch (error) {
+                console.error('Erro ao processar horário alternativo:', error);
+                // Em caso de erro, mantém o horário padrão
+            }
+        }
+
+        const isWithinHours = currentTime >= workStart && currentTime <= workEnd;
+
+        res.json({
+            isWorking: isWithinHours,
+            workStart: workStart,
+            workEnd: workEnd,
+            currentDay: currentDay,
+            currentTime: currentTime,
+            isAlternativeSchedule: workStart !== employee.work_start || workEnd !== employee.work_end
+        });
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: "Erro ao verificar status de trabalho" });
+        console.error(error);
+        res.status(500).json({ 
+            message: "Erro ao verificar status de trabalho",
+            error: error.message 
+        });
     }
-  }
-);
+});
 
 // Rotas para tarefas
 app.get('/api/tasks', authenticateToken, async (req, res) => {

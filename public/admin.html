@@ -688,6 +688,449 @@
     display: flex;
     gap: 0.5rem;
 }
+
+ /* Estilos para horários alternativos */
+ .alternative-schedules-container {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+
+        .alternative-schedules-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .schedule-row {
+            display: grid;
+            grid-template-columns: 2fr 3fr 1fr;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 8px;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+        }
+
+        .schedule-times {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .schedule-times span {
+            color: #666;
+        }
+
+        .btn-remove-schedule {
+            padding: 4px 8px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-remove-schedule:hover {
+            background: #c82333;
+        }
+
+        /* Estilos para exibição de horários alternativos na lista */
+        .alternative-schedules-container {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.alternative-schedules-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.alternative-schedules-header h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.schedule-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr 80px;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    transition: all 0.2s ease;
+}
+
+.schedule-row:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.schedule-day select {
+    width: 100%;
+    padding: 0.5rem;
+    background: var(--bg-primary);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.schedule-times {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.schedule-times span {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.schedule-times input {
+    padding: 0.5rem;
+    background: var(--bg-primary);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    width: 100%;
+}
+
+.btn-remove-schedule {
+    background: var(--danger);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    width: 100%;
+    font-size: 0.9rem;
+}
+
+.btn-remove-schedule:hover {
+    opacity: 0.9;
+}
+
+/* Container principal dos horários alternativos */
+.alternative-schedules-list {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.alternative-schedules-list h4 {
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.alternative-schedules-list h4::before {
+    content: "🕒";
+    font-size: 1rem;
+}
+
+/* Grid de horários */
+.schedules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.75rem;
+}
+
+/* Item individual do horário */
+.schedule-item {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.75rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.schedule-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--accent);
+    transform: translateY(-1px);
+}
+
+/* Dia da semana */
+.schedule-day {
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.schedule-day::before {
+    content: "📅";
+    font-size: 0.9rem;
+}
+
+/* Horário */
+.schedule-time {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    padding: 0.25rem 0.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.schedule-time::before {
+    content: "⏰";
+    font-size: 0.85rem;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .schedules-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+    
+    .schedule-item {
+        padding: 0.5rem;
+    }
+}
+
+/* Animação de entrada suave */
+.schedule-item {
+    animation: scheduleItemFadeIn 0.3s ease forwards;
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+@keyframes scheduleItemFadeIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Aplicar delay na animação para cada item */
+.schedule-item:nth-child(1) { animation-delay: 0.1s; }
+.schedule-item:nth-child(2) { animation-delay: 0.2s; }
+.schedule-item:nth-child(3) { animation-delay: 0.3s; }
+.schedule-item:nth-child(4) { animation-delay: 0.4s; }
+.schedule-item:nth-child(5) { animation-delay: 0.5s; }
+.schedule-item:nth-child(6) { animation-delay: 0.6s; }
+.schedule-item:nth-child(7) { animation-delay: 0.7s; }
+
+/* Tooltip para horários longos */
+.schedule-time {
+    position: relative;
+}
+
+
+/* Modal de Edição */
+.edit-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+.edit-modal-content {
+    background: var(--bg-primary);
+    border-radius: 8px;
+    width: 90%;
+    max-width: 600px;
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Scrollbar personalizada para o modal */
+.edit-modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.edit-modal-content::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 4px;
+}
+
+.edit-modal-content::-webkit-scrollbar-thumb {
+    background: var(--accent);
+    border-radius: 4px;
+}
+
+.edit-modal-content::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
+    opacity: 0.8;
+}
+
+/* Conteúdo interno do modal */
+.edit-modal-header {
+    position: sticky;
+    top: 0;
+    background: var(--bg-primary);
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1;
+}
+
+.edit-modal-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    line-height: 1;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.edit-modal-close:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Formulário dentro do modal */
+#editEmployeeForm {
+    padding: 1.5rem;
+}
+
+.edit-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.edit-form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.edit-form-group input,
+.edit-form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--bg-secondary);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.edit-form-group input:focus,
+.edit-form-group select:focus {
+    border-color: var(--accent);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.edit-modal-footer {
+    position: sticky;
+    bottom: 0;
+    background: var(--bg-primary);
+    padding: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    z-index: 1;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .edit-modal {
+        padding: 0.5rem;
+    }
+
+    .edit-modal-content {
+        width: 95%;
+        max-height: 95vh;
+    }
+
+    .edit-modal-header,
+    #editEmployeeForm,
+    .edit-modal-footer {
+        padding: 1rem;
+    }
+}
+
+/* Ajustes para o modal de horários alternativos dentro do modal de edição */
+.edit-modal .alternative-schedules-container {
+    margin-top: 1.5rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.edit-modal .alternative-schedules-header {
+    margin-bottom: 1rem;
+}
+
+.edit-modal .schedule-row {
+    margin-bottom: 1rem;
+    background: var(--bg-primary);
+}
+
+/* Melhorias na acessibilidade */
+.edit-modal-content:focus {
+    outline: none;
+}
+
+.edit-modal-content[role="dialog"] {
+    outline: none;
+}
     </style>
   </head>
   <body>
@@ -716,37 +1159,80 @@
         <!-- Aba de Funcionários -->
         <div id="employees" class="tab-content active">
           <div class="card">
-            <h2>Adicionar Funcionário</h2>
-            <form id="employeeForm" class="form-row">
-              <div class="form-group">
-                <label for="employeeName">Nome do Funcionário</label>
-                <input type="text" id="employeeName" required />
-              </div>
-              <div class="form-group">
-                <label for="employeeStore">Loja</label>
-                <select id="employeeStore" required></select>
-              </div>
-              <div class="form-group">
-                <label for="username">Usuário</label>
-                <input type="text" id="username" required />
-              </div>
-              <div class="form-group">
-                <label for="password">Senha</label>
-                <input type="password" id="password" required />
-              </div>
-              <div class="form-group">
-                <label for="workStart">Horário de Entrada</label>
-                <input type="time" id="workStart" required value="09:00" />
-              </div>
-              <div class="form-group">
-                <label for="workEnd">Horário de Saída</label>
-                <input type="time" id="workEnd" required value="18:00" />
-              </div>
-              <button type="submit" class="btn btn-success">
-                Adicionar Funcionário
-              </button>
-            </form>
+              <h2>Adicionar Funcionário</h2>
+              <form id="employeeForm" class="form-row">
+                  <!-- Campos existentes mantidos... -->
+                  <div class="form-group">
+                      <label for="employeeName">Nome do Funcionário</label>
+                      <input type="text" id="employeeName" required />
+                  </div>
+                  <div class="form-group">
+                      <label for="employeeStore">Loja</label>
+                      <select id="employeeStore" required></select>
+                  </div>
+                  <div class="form-group">
+                      <label for="username">Usuário</label>
+                      <input type="text" id="username" required />
+                  </div>
+                  <div class="form-group">
+                      <label for="password">Senha</label>
+                      <input type="password" id="password" required />
+                  </div>
+                  <div class="form-group">
+                      <label for="workStart">Horário de Entrada Padrão</label>
+                      <input type="time" id="workStart" required value="08:00" />
+                  </div>
+                  <div class="form-group">
+                      <label for="workEnd">Horário de Saída Padrão</label>
+                      <input type="time" id="workEnd" required value="16:20" />
+                  </div>
+
+                  <!-- Nova seção de horários alternativos -->
+                  <div class="alternative-schedules-container">
+                      <div class="alternative-schedules-header">
+                          <h3>Horários Alternativos</h3>
+                          <button type="button" class="btn btn-primary" onclick="addScheduleRow()">
+                              + Adicionar Horário
+                          </button>
+                      </div>
+                      <div id="alternativeSchedules">
+                          <!-- Linhas de horário serão adicionadas aqui via JavaScript -->
+                      </div>
+                  </div>
+
+                  <button type="submit" class="btn btn-success">
+                      Adicionar Funcionário
+                  </button>
+              </form>
           </div>
+
+          <template id="scheduleRowTemplate">
+            <div class="schedule-row">
+                <div class="schedule-day">
+                    <select class="day-select" required>
+                        <option value="">Selecione o dia</option>
+                        <option value="1">Segunda-feira</option>
+                        <option value="2">Terça-feira</option>
+                        <option value="3">Quarta-feira</option>
+                        <option value="4">Quinta-feira</option>
+                        <option value="5">Sexta-feira</option>
+                        <option value="6">Sábado</option>
+                        <option value="7">Domingo</option>
+                    </select>
+                </div>
+                <div class="schedule-times">
+                    <input type="time" class="time-start" required>
+                    <span>até</span>
+                    <input type="time" class="time-end" required>
+                </div>
+                <div class="schedule-actions">
+                    <button type="button" class="btn-remove-schedule" onclick="removeScheduleRow(this)">
+                        Remover
+                    </button>
+                </div>
+            </div>
+        </template>
+
 
           <div class="filters">
             <div class="form-group">
@@ -1253,98 +1739,149 @@ async function rejectLeaveRequest(requestId) {
 
       // Atualizar lista de funcionários
       function updateEmployeesList() {
-        const list = document.getElementById("employeesList");
+    const list = document.getElementById("employeesList");
+    if (!list) return;
 
-        // Filtrar funcionários se houver um filtro de loja ativo
-        const filteredEmployees = currentStoreFilter
-          ? employees.filter(
-              (emp) => emp.store_id.toString() === currentStoreFilter
-            )
-          : employees;
+    // Filtrar funcionários se houver um filtro de loja ativo
+    const filteredEmployees = currentStoreFilter
+        ? employees.filter((emp) => emp.store_id.toString() === currentStoreFilter)
+        : employees;
 
-        list.innerHTML = employees
-          .map((emp) => {
+    list.innerHTML = employees
+        .map((emp) => {
             // Determinar status do funcionário
             let statusClass, statusText, statusIcon;
             if (emp.on_leave) {
-              statusClass = "status-leave";
-              statusText = "De Folga";
-              statusIcon = "🏖️";
+                statusClass = "status-leave";
+                statusText = "De Folga";
+                statusIcon = "🏖️";
             } else if (!isWithinWorkHours(emp.work_start, emp.work_end)) {
-              statusClass = "status-off";
-              statusText = "Fora de Expediente";
-              statusIcon = "🔴";
+                statusClass = "status-off";
+                statusText = "Fora de Expediente";
+                statusIcon = "🔴";
             } else {
-              statusClass = "status-working";
-              statusText = "Disponível";
-              statusIcon = "🟢";
+                statusClass = "status-working";
+                statusText = "Disponível";
+                statusIcon = "🟢";
             }
 
             const store = stores.find((s) => s.id === emp.store_id);
 
-            return `
-            <div class="employee-card">
-                <div class="employee-info">
-                    <div class="employee-name">
-                        ${emp.name}
-                        ${
-                          store
-                            ? `<span class="store-badge">${store.name}</span>`
-                            : ""
-                        }
-                    </div>
-                    <div class="employee-details">
-                        <div>Usuário: ${emp.username}</div>
-                        <div class="work-schedule">
-                            🕒 Horário: ${emp.work_start} - ${emp.work_end}
+            // Gerar HTML para horários alternativos
+            let alternativeScheduleHtml = '';
+            if (emp.alternative_schedule) {
+                try {
+                    const schedule = typeof emp.alternative_schedule === 'string' ? 
+                        JSON.parse(emp.alternative_schedule) : emp.alternative_schedule;
+                    
+                    alternativeScheduleHtml = `
+                        <div class="alternative-schedules-list">
+                            <h4>Horários Alternativos:</h4>
+                            <div class="schedules-grid">
+                                ${Object.entries(schedule).map(([day, times]) => `
+                                    <div class="schedule-item">
+                                        <div class="schedule-day">${getDayName(day)}</div>
+                                        <div class="schedule-time">${times.work_start} - ${times.work_end}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
                         </div>
-                        ${
-                          store
-                            ? `
-                        <div class="store-info">
-                            📍 Loja: ${store.name}
-                            ${
-                              store.address
-                                ? `<br>📮 Endereço: ${store.address}`
-                                : ""
-                            }
-                            ${
-                              store.phone
-                                ? `<br>📞 Telefone: ${store.phone}`
-                                : ""
-                            }
-                        </div>
-                        `
-                            : ""
-                        }
-                    </div>
-                </div>
-                <div class="employee-status ${statusClass}">
-                    ${statusIcon} ${statusText}
-                </div>
-                <div class="employee-actions">
-                    <button onclick="editEmployee(${emp.id})" class="btn">
-                        Editar
-                    </button>
-                    <button onclick="deleteEmployee(${
-                      emp.id
-                    })" class="btn btn-danger">
-                        Remover
-                    </button>
-                    <button onclick="viewEmployeeTasks(${
-                      emp.id
-                    })" class="btn btn-success">
-                        Tarefas
-                    </button>
-                </div>
-            </div>
-        `;
-          })
-          .join("");
+                    `;
+                } catch (e) {
+                    console.error('Erro ao processar horários alternativos:', e);
+                }
+            }
 
-        // Atualizar contadores
-        updateEmployeeCounters(filteredEmployees);
-      }
+            // Retornar o HTML do card do funcionário
+            return `
+                <div class="employee-card">
+                    <div class="employee-info">
+                        <div class="employee-name">
+                            ${emp.name}
+                            ${store ? `<span class="store-badge">${store.name}</span>` : ""}
+                        </div>
+                        <div class="employee-details">
+                            <div>Usuário: ${emp.username}</div>
+                            <div class="work-schedule">
+                                🕒 Horário Padrão: ${emp.work_start} - ${emp.work_end}
+                            </div>
+                            ${alternativeScheduleHtml}
+                            ${store ? `
+                                <div class="store-info">
+                                    📍 Loja: ${store.name}
+                                    ${store.address ? `<br>📮 Endereço: ${store.address}` : ""}
+                                    ${store.phone ? `<br>📞 Telefone: ${store.phone}` : ""}
+                                </div>
+                            ` : ""}
+                        </div>
+                    </div>
+                    <div class="employee-status ${statusClass}">
+                        ${statusIcon} ${statusText}
+                    </div>
+                    <div class="employee-actions">
+                        <button onclick="editEmployeeModal(${emp.id})" class="btn">
+                            Editar
+                        </button>
+                        <button onclick="deleteEmployee(${emp.id})" class="btn btn-danger">
+                            Remover
+                        </button>
+                        <button onclick="viewEmployeeTasks(${emp.id})" class="btn btn-success">
+                            Tarefas
+                        </button>
+                    </div>
+                </div>
+            `;
+        })
+        .join("");
+
+    // Atualizar os contadores de funcionários
+    const totalEmployees = filteredEmployees.length;
+    const activeEmployees = filteredEmployees.filter(
+        (emp) => !emp.on_leave && isWithinWorkHours(emp.work_start, emp.work_end)
+    ).length;
+    const onLeaveEmployees = filteredEmployees.filter(
+        (emp) => emp.on_leave
+    ).length;
+
+    // Criar e atualizar os contadores
+    const counters = document.createElement("div");
+    counters.className = "employee-counters";
+    counters.innerHTML = `
+        <div class="counter-card">
+            <div class="counter-value">${totalEmployees}</div>
+            <div class="counter-label">Total de Funcionários</div>
+        </div>
+        <div class="counter-card">
+            <div class="counter-value">${activeEmployees}</div>
+            <div class="counter-label">Funcionários Ativos</div>
+        </div>
+        <div class="counter-card">
+            <div class="counter-value">${onLeaveEmployees}</div>
+            <div class="counter-label">De Folga</div>
+        </div>
+    `;
+
+    // Remover contadores existentes e adicionar os novos
+    const existingCounters = document.querySelector(".employee-counters");
+    if (existingCounters) {
+        existingCounters.remove();
+    }
+    list.parentNode.insertBefore(counters, list);
+}
+
+// Função auxiliar para obter o nome do dia da semana
+function getDayName(day) {
+    const days = {
+        '1': 'Segunda-feira',
+        '2': 'Terça-feira',
+        '3': 'Quarta-feira',
+        '4': 'Quinta-feira',
+        '5': 'Sexta-feira',
+        '6': 'Sábado',
+        '7': 'Domingo'
+    };
+    return days[day] || day;
+}
 
       function updateEmployeeCounters(filteredEmployees) {
         const totalEmployees = filteredEmployees.length;
@@ -1382,18 +1919,52 @@ async function rejectLeaveRequest(requestId) {
       }
 
       function isWithinWorkHours(workStart, workEnd) {
+    if (!workStart || !workEnd) return false;
+
+    try {
         const now = new Date();
         const currentTime = now.getHours() * 60 + now.getMinutes(); // Converter para minutos
 
         // Converter horário de trabalho para minutos
-        const [startHour, startMinute] = workStart.split(":").map(Number);
-        const [endHour, endMinute] = workEnd.split(":").map(Number);
+        const [startHour, startMinute] = workStart.toString().split(":").map(Number);
+        const [endHour, endMinute] = workEnd.toString().split(":").map(Number);
 
         const workStartMinutes = startHour * 60 + startMinute;
         const workEndMinutes = endHour * 60 + endMinute;
 
         return currentTime >= workStartMinutes && currentTime <= workEndMinutes;
-      }
+    } catch (error) {
+        console.error('Erro ao verificar horário:', error);
+        return false;
+    }
+}
+
+// Adicionar funções para manipular horários alternativos
+function addScheduleRow() {
+    const template = document.getElementById('scheduleRowTemplate');
+    if (!template) {
+        console.error('Template de horário não encontrado');
+        return;
+    }
+
+    const container = document.getElementById('alternativeSchedules');
+    const clone = template.content.cloneNode(true);
+    
+    // Definir valores padrão para os horários
+    const timeStart = clone.querySelector('.time-start');
+    const timeEnd = clone.querySelector('.time-end');
+    if (timeStart) timeStart.value = "08:00";
+    if (timeEnd) timeEnd.value = "16:20";
+    
+    container.appendChild(clone);
+}
+
+function removeScheduleRow(button) {
+    const row = button.closest('.schedule-row');
+    if (row) {
+        row.remove();
+    }
+}
 
       async function deleteTask(taskId) {
         if (!confirm("Tem certeza que deseja excluir esta tarefa?")) return;
@@ -1513,112 +2084,350 @@ async function rejectLeaveRequest(requestId) {
 
       // Adicionar funcionário
       async function addEmployee(event) {
-        event.preventDefault();
+    event.preventDefault();
 
-        const name = document.getElementById("employeeName").value;
-        const username = document.getElementById("username").value;
-        const password = document.getElementById("password").value;
-        const workStart = document.getElementById("workStart").value;
-        const workEnd = document.getElementById("workEnd").value;
-        const storeId = document.getElementById("employeeStore").value;
+    const name = document.getElementById("employeeName").value;
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+    const workStart = document.getElementById("workStart").value;
+    const workEnd = document.getElementById("workEnd").value;
+    const storeId = document.getElementById("employeeStore").value;
+    const alternativeSchedule = getAlternativeSchedule(); // Nova função
 
-        if (!name || !username || !password || !storeId) {
-          showNotification("Todos os campos são obrigatórios", "error");
-          return;
-        }
+    if (!name || !username || !password || !storeId) {
+        showNotification("Todos os campos são obrigatórios", "error");
+        return;
+    }
 
-        try {
-          // Verificar se o usuário já existe
-          const checkResponse = await fetch(`/api/users/check/${username}`, {
+    try {
+        const checkResponse = await fetch(`/api/users/check/${username}`, {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
             },
-          });
+        });
 
-          const checkResult = await checkResponse.json();
-          if (checkResult.exists) {
+        const checkResult = await checkResponse.json();
+        if (checkResult.exists) {
             showNotification("Nome de usuário já existe", "error");
             return;
-          }
+        }
 
-          const response = await fetch("/api/employees", {
+        const response = await fetch("/api/employees", {
             method: "POST",
             headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
             },
             body: JSON.stringify({
-              name,
-              username,
-              password,
-              workStart,
-              workEnd,
-              store_id: storeId,
+                name,
+                username,
+                password,
+                workStart,
+                workEnd,
+                store_id: storeId,
+                alternativeSchedule // Novo campo
             }),
-          });
+        });
 
-          if (!response.ok) {
+        if (!response.ok) {
             const error = await response.json();
             throw new Error(error.message || "Erro ao criar funcionário");
-          }
-
-          showNotification("Funcionário adicionado com sucesso", "success");
-          event.target.reset();
-
-          await loadEmployees();
-        } catch (error) {
-          console.error("Erro ao adicionar funcionário:", error);
-          showNotification(error.message, "error");
         }
-      }
-      async function editEmployee(id) {
-        try {
-          const employee = employees.find((emp) => emp.id === id);
-          if (!employee) return;
 
-          const newName = prompt("Novo nome:", employee.name);
-          const newWorkStart = prompt(
-            "Novo horário de entrada (HH:MM):",
-            employee.work_start
-          );
-          const newWorkEnd = prompt(
-            "Novo horário de saída (HH:MM):",
-            employee.work_end
-          );
-          const newPassword = prompt(
-            "Nova senha (deixe em branco para manter a atual):"
-          );
+        showNotification("Funcionário adicionado com sucesso", "success");
+        event.target.reset();
+        await loadEmployees();
+    } catch (error) {
+        console.error("Erro ao adicionar funcionário:", error);
+        showNotification(error.message, "error");
+    }
+}
 
-          if (!newName || !newWorkStart || !newWorkEnd) return;
+// Nova função para coletar horários alternativos
+function getAlternativeSchedule() {
+    const schedules = {};
+    const rows = document.querySelectorAll('.schedule-row');
+    
+    rows.forEach(row => {
+        const daySelect = row.querySelector('.day-select');
+        const timeStart = row.querySelector('.time-start');
+        const timeEnd = row.querySelector('.time-end');
+        
+        if (daySelect && timeStart && timeEnd && daySelect.value) {
+            schedules[daySelect.value] = {
+                work_start: timeStart.value,
+                work_end: timeEnd.value
+            };
+        }
+    });
+    
+    return Object.keys(schedules).length > 0 ? schedules : null;
+}
 
-          const data = {
-            name: newName,
-            workStart: newWorkStart,
-            workEnd: newWorkEnd,
-          };
+async function editEmployeeModal(id) {
+    try {
+        const employee = employees.find(emp => emp.id === id);
+        if (!employee) {
+            showNotification('Funcionário não encontrado', 'error');
+            return;
+        }
 
-          if (newPassword) {
-            data.password = newPassword;
-          }
+        // Remover modal existente se houver
+        const existingModal = document.querySelector('.edit-modal');
+        if (existingModal) {
+            existingModal.remove();
+        }
 
-          const response = await fetch(`/api/employees/${id}`, {
-            method: "PUT",
+        // Criar o modal
+        const modalHtml = `
+            <div class="edit-modal" role="dialog" aria-labelledby="modalTitle" aria-modal="true">
+                <div class="edit-modal-content" tabindex="-1">
+                    <div class="edit-modal-header">
+                        <h2 class="edit-modal-title" id="modalTitle">Editar Funcionário</h2>
+                        <button class="edit-modal-close" onclick="closeEditModal()" aria-label="Fechar modal">×</button>
+                    </div>
+                    <form id="editEmployeeForm" onsubmit="updateEmployee(event, ${id})">
+                        <div class="edit-form-group">
+                            <label for="editName">Nome</label>
+                            <input type="text" id="editName" value="${employee.name}" required 
+                                   aria-required="true">
+                        </div>
+                        
+                        <div class="edit-form-group">
+                            <label for="editWorkStart">Horário de Entrada Padrão</label>
+                            <input type="time" id="editWorkStart" value="${employee.work_start || ''}" required
+                                   aria-required="true">
+                        </div>
+                        
+                        <div class="edit-form-group">
+                            <label for="editWorkEnd">Horário de Saída Padrão</label>
+                            <input type="time" id="editWorkEnd" value="${employee.work_end || ''}" required
+                                   aria-required="true">
+                        </div>
+                        
+                        <div class="edit-form-group">
+                            <label for="editStore">Loja</label>
+                            <select id="editStore" required aria-required="true">
+                                <option value="">Selecione uma loja</option>
+                                ${stores.map(store => `
+                                    <option value="${store.id}" ${store.id === employee.store_id ? 'selected' : ''}>
+                                        ${store.name}
+                                    </option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        
+                        <div class="edit-form-group">
+                            <label for="editPassword">Nova Senha (deixe em branco para manter a atual)</label>
+                            <input type="password" id="editPassword" 
+                                   aria-required="false">
+                        </div>
+
+                        <div class="alternative-schedules-container">
+                            <div class="alternative-schedules-header">
+                                <h3>Horários Alternativos</h3>
+                                <button type="button" class="btn" onclick="addEditScheduleRow()">
+                                    + Adicionar Horário
+                                </button>
+                            </div>
+                            <div id="editAlternativeSchedules">
+                                ${generateExistingSchedules(employee.alternative_schedule)}
+                            </div>
+                        </div>
+
+                        <div class="edit-modal-footer">
+                            <button type="button" class="btn btn-danger" onclick="closeEditModal()">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-success">
+                                Salvar Alterações
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+
+        // Adicionar modal ao DOM
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Adicionar event listeners
+        const modal = document.querySelector('.edit-modal');
+        const modalContent = modal.querySelector('.edit-modal-content');
+        
+        // Fechar ao clicar fora
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeEditModal();
+            }
+        });
+
+        // Fechar com tecla ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeEditModal();
+            }
+        });
+
+        // Focar no primeiro input
+        setTimeout(() => {
+            document.getElementById('editName').focus();
+        }, 100);
+
+        // Prevenir scroll do body
+        document.body.style.overflow = 'hidden';
+    } catch (error) {
+        console.error('Erro ao abrir modal de edição:', error);
+        showNotification('Erro ao abrir formulário de edição', 'error');
+    }
+}
+
+function generateAlternativeScheduleHTML(scheduleData) {
+    if (!scheduleData) return '';
+    
+    let schedules;
+    try {
+        schedules = typeof scheduleData === 'string' ? JSON.parse(scheduleData) : scheduleData;
+        
+        return `
+            <div class="alternative-schedules-list">
+                <h4>Horários Alternativos</h4>
+                <div class="schedules-grid">
+                    ${Object.entries(schedules).map(([day, times]) => `
+                        <div class="schedule-item">
+                            <div class="schedule-day">
+                                ${getDayName(day)}
+                            </div>
+                            <div class="schedule-time" 
+                                 data-time="${times.work_start} até ${times.work_end}">
+                                ${times.work_start} - ${times.work_end}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    } catch (e) {
+        console.error('Erro ao processar horários alternativos:', e);
+        return '';
+    }
+}
+
+// Atualizar função de fechamento do modal
+function closeEditModal() {
+    const modal = document.querySelector('.edit-modal');
+    if (modal) {
+        modal.remove();
+        document.body.style.overflow = ''; // Restaurar scroll
+    }
+}
+
+async function updateEmployee(event, id) {
+    event.preventDefault();
+
+    try {
+        const formData = {
+            name: document.getElementById('editName').value,
+            workStart: document.getElementById('editWorkStart').value,
+            workEnd: document.getElementById('editWorkEnd').value,
+            store_id: document.getElementById('editStore').value,
+            alternativeSchedule: getAlternativeScheduleFromEdit()
+        };
+
+        const password = document.getElementById('editPassword').value;
+        if (password) {
+            formData.password = password;
+        }
+
+        const response = await fetch(`/api/employees/${id}`, {
+            method: 'PUT',
             headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
             },
-            body: JSON.stringify(data),
-          });
+            body: JSON.stringify(formData)
+        });
 
-          if (!response.ok) throw new Error("Erro ao atualizar funcionário");
-
-          showNotification("Funcionário atualizado com sucesso", "success");
-          await loadEmployees();
-        } catch (error) {
-          console.error("Erro ao editar funcionário:", error);
-          showNotification("Erro ao atualizar funcionário", "error");
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Erro ao atualizar funcionário');
         }
-      }
+
+        showNotification('Funcionário atualizado com sucesso', 'success');
+        closeEditModal();
+        await loadEmployees();
+    } catch (error) {
+        console.error('Erro ao atualizar funcionário:', error);
+        showNotification(error.message, 'error');
+    }
+}
+
+
+// Função para coletar horários alternativos do formulário de edição
+function getAlternativeScheduleFromEdit() {
+    const schedules = {};
+    const rows = document.querySelectorAll('#editAlternativeSchedules .schedule-row');
+    
+    rows.forEach(row => {
+        const daySelect = row.querySelector('.day-select');
+        const timeStart = row.querySelector('.time-start');
+        const timeEnd = row.querySelector('.time-end');
+        
+        if (daySelect && timeStart && timeEnd && daySelect.value) {
+            schedules[daySelect.value] = {
+                work_start: timeStart.value,
+                work_end: timeEnd.value
+            };
+        }
+    });
+    
+    return Object.keys(schedules).length > 0 ? schedules : null;
+}
+
+// Função para gerar HTML dos horários alternativos existentes
+function generateExistingSchedules(scheduleData) {
+    if (!scheduleData) return '';
+    
+    let schedules;
+    try {
+        schedules = typeof scheduleData === 'string' ? JSON.parse(scheduleData) : scheduleData;
+    } catch (e) {
+        console.error('Erro ao processar horários alternativos:', e);
+        return '';
+    }
+
+    return Object.entries(schedules).map(([day, times]) => `
+        <div class="schedule-row">
+            <div class="schedule-day">
+                <select class="day-select" required>
+                    <option value="1" ${day === '1' ? 'selected' : ''}>Segunda-feira</option>
+                    <option value="2" ${day === '2' ? 'selected' : ''}>Terça-feira</option>
+                    <option value="3" ${day === '3' ? 'selected' : ''}>Quarta-feira</option>
+                    <option value="4" ${day === '4' ? 'selected' : ''}>Quinta-feira</option>
+                    <option value="5" ${day === '5' ? 'selected' : ''}>Sexta-feira</option>
+                    <option value="6" ${day === '6' ? 'selected' : ''}>Sábado</option>
+                    <option value="7" ${day === '7' ? 'selected' : ''}>Domingo</option>
+                </select>
+            </div>
+            <div class="schedule-times">
+                <input type="time" class="time-start" value="${times.work_start}" required>
+                <span>até</span>
+                <input type="time" class="time-end" value="${times.work_end}" required>
+            </div>
+            <div class="schedule-actions">
+                <button type="button" class="btn-remove-schedule" onclick="removeScheduleRow(this)">Remover</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Função para adicionar nova linha de horário no modal de edição
+function addEditScheduleRow() {
+    const container = document.getElementById('editAlternativeSchedules');
+    const template = document.getElementById('scheduleRowTemplate');
+    const clone = template.content.cloneNode(true);
+    container.appendChild(clone);
+}
 
       // Remover funcionário
       async function deleteEmployee(id) {
