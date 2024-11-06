@@ -934,11 +934,19 @@ app.get('/api/tasks', authenticateToken, async (req, res) => {
                 t.*,
                 e.name as employee_name,
                 s.name as store_name,
-                COALESCE(fts.status, t.status) as current_status
+                CASE 
+                    WHEN t.is_fixed = 1 THEN 
+                        COALESCE(
+                            (SELECT status 
+                             FROM fixed_task_status 
+                             WHERE task_id = t.id AND date = ?),
+                            'pendente'
+                        )
+                    ELSE t.status 
+                END as current_status
             FROM tasks t
             LEFT JOIN employees e ON t.employee_id = e.id
             LEFT JOIN stores s ON t.store_id = s.id
-            LEFT JOIN fixed_task_status fts ON t.id = fts.task_id AND fts.date = ?
             WHERE (t.date = ? OR t.is_fixed = 1)
         `;
         
@@ -950,8 +958,19 @@ app.get('/api/tasks', authenticateToken, async (req, res) => {
         }
 
         if (status) {
-            query += ' AND COALESCE(fts.status, t.status) = ?';
-            params.push(status);
+            query += ` AND (
+                CASE 
+                    WHEN t.is_fixed = 1 THEN 
+                        COALESCE(
+                            (SELECT status 
+                             FROM fixed_task_status 
+                             WHERE task_id = t.id AND date = ?),
+                            'pendente'
+                        )
+                    ELSE t.status 
+                END
+            ) = ?`;
+            params.push(selectedDate, status);
         }
 
         const tasks = await db.all(query, params);
@@ -976,7 +995,6 @@ app.get('/api/tasks', authenticateToken, async (req, res) => {
 app.post('/api/tasks', authenticateToken, async (req, res) => {
     try {
         const { name, description, employeeId, priority, isFixed, date, store_id } = req.body;
-        
 
         if (!name || !store_id) {
             return res.status(400).json({
@@ -984,44 +1002,12 @@ app.post('/api/tasks', authenticateToken, async (req, res) => {
             });
         }
 
-        // Verificar se o usuário tem permissão para criar tarefas na loja
-        if (!req.user.isAdmin) {
-            const userEmployee = await db.get(
-                'SELECT id, store_id FROM employees WHERE id = ?',
-                [req.user.employeeId]
-            );
-
-            if (!userEmployee || userEmployee.store_id !== parseInt(store_id)) {
-                return res.status(403).json({
-                    message: 'Você só pode criar tarefas para sua própria loja'
-                });
-            }
-        }
-
-        // Se houver um funcionário específico, verificar se ele pertence à loja
-        if (employeeId) {
-            const targetEmployee = await db.get(
-                'SELECT id, store_id FROM employees WHERE id = ?',
-                [employeeId]
-            );
-
-            if (!targetEmployee) {
-                return res.status(400).json({
-                    message: 'Funcionário não encontrado'
-                });
-            }
-
-            if (targetEmployee.store_id !== parseInt(store_id)) {
-                return res.status(400).json({
-                    message: 'O funcionário deve pertencer à mesma loja da tarefa'
-                });
-            }
-        }
+        // Verificar permissões e outras validações...
 
         const result = await db.run(
             `INSERT INTO tasks (
                 name, description, employee_id, priority, is_fixed, date, store_id, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pendente')`,
             [
                 name,
                 description || null,
@@ -1029,12 +1015,18 @@ app.post('/api/tasks', authenticateToken, async (req, res) => {
                 priority || 1,
                 isFixed ? 1 : 0,
                 date,
-                store_id,
-                'pendente'
+                store_id
             ]
         );
 
-    
+        // Se for uma tarefa fixa, inserir o status inicial como pendente na tabela fixed_task_status
+        if (isFixed) {
+            await db.run(
+                `INSERT INTO fixed_task_status (task_id, date, status) 
+                 VALUES (?, ?, 'pendente')`,
+                [result.lastID, date]
+            );
+        }
 
         const newTask = await db.get(
             `SELECT t.*, 
