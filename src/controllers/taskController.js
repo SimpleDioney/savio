@@ -382,17 +382,6 @@ class TaskController {
             // Verificar se é hoje ou futuro
             const isToday = nowDate.getTime() === selectedDate.getTime();
             const isFuture = selectedDate.getTime() > nowDate.getTime();
-    
-            console.log('Debug - Verificação de data:', {
-                dataAtualLocal: nowDate.toLocaleString(),
-                dataSelecionadaLocal: selectedDate.toLocaleString(),
-                diaSemana: dayOfWeek,
-                nomeDia: ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][selectedDate.getDay()],
-                isToday,
-                isFuture,
-                currentTime,
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-            });
             
             if (!store_id) {
                 return res.status(400).json({
@@ -481,18 +470,7 @@ class TaskController {
                     }
                 }
     
-                console.log(`Debug - Horários de ${emp.name}:`, {
-                    horarioPadrao: {
-                        inicio: emp.work_start,
-                        fim: emp.work_end
-                    },
-                    horarioEfetivo: {
-                        inicio: emp.effective_work_start,
-                        fim: emp.effective_work_end
-                    },
-                    detalhesHorario: scheduleInfo,
-                    horarioAtual: currentTime
-                });
+                
             });
     
             // Filtrar funcionários disponíveis
@@ -506,19 +484,7 @@ class TaskController {
                 const isInWorkHours = currentTime >= emp.effective_work_start && 
                                     currentTime <= emp.effective_work_end;
     
-                console.log(`Verificação de horário para ${emp.name}:`, {
-                    horarioAtual: currentTime,
-                    inicioExpediente: emp.effective_work_start,
-                    fimExpediente: emp.effective_work_end,
-                    dentroDoHorario: isInWorkHours,
-                    eHoje: isToday,
-                    eFuturo: isFuture,
-                    usandoHorarioAlternativo: emp.is_alternative_schedule === 1,
-                    diaVerificado: {
-                        numero: dayOfWeek,
-                        nome: ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][selectedDate.getDay()]
-                    }
-                });
+                
     
                 // Se for hoje, deve estar dentro do horário de trabalho
                 if (isToday && !isInWorkHours) {
@@ -535,19 +501,7 @@ class TaskController {
                 return true;
             });
     
-            console.log('Debug - Funcionários disponíveis:', {
-                total: availableEmployees.length,
-                dataAtual: today,
-                horaAtual: currentTime,
-                detalhes: availableEmployees.map(emp => ({
-                    nome: emp.name,
-                    horarioInicio: emp.effective_work_start,
-                    horarioFim: emp.effective_work_end,
-                    tarefasAtuais: emp.current_task_count,
-                    usandoHorarioAlternativo: emp.is_alternative_schedule === 1,
-                    status: isToday ? 'Dentro do expediente' : 'Data futura'
-                }))
-            });
+            
     
             if (availableEmployees.length === 0) {
                 return res.status(400).json({
