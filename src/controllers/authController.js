@@ -55,7 +55,7 @@ class AuthController {
                 employeeName: user.employee_name || user.username,
             });
         } catch (error) {
-            console.error("Erro no login:", error);
+            
             res.status(500).json({ message: "Erro ao realizar login" });
         }
     }
@@ -71,7 +71,7 @@ class AuthController {
 
             res.json({ exists: !!user });
         } catch (error) {
-            console.error("Erro ao verificar usuário:", error);
+            
             res.status(500).json({
                 message: "Erro ao verificar usuário",
             });

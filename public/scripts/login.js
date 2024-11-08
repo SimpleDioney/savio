@@ -39,7 +39,7 @@ async function handleLogin(event) {
             throw new Error(data.message || 'Erro ao fazer login');
         }
     } catch (error) {
-        console.error('Erro ao fazer login:', error);
+        
         errorMessage.textContent = error.message || 'Usuário ou senha inválidos';
         errorMessage.style.display = 'block';
     } finally {

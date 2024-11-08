@@ -144,7 +144,6 @@
 
         calendar.innerHTML = calendarHtml;
     } catch (error) {
-        console.error('Erro ao atualizar calendário:', error);
         showNotification('Erro ao atualizar calendário', 'error');
     }
 }
@@ -337,7 +336,6 @@
         updateRequestCalendar();
         await loadExistingRequests(); // Recarregar solicitações após enviar
     } catch (error) {
-        console.error('Erro:', error);
         showNotification(error.message, 'error');
     }
 }
@@ -375,7 +373,6 @@ async function loadExistingRequests(month) {
 
         return existingRequests;
     } catch (error) {
-        console.error('Erro:', error);
         showNotification('Erro ao carregar solicitações existentes', 'error');
         return [];
     }
@@ -405,7 +402,6 @@ async function loadExistingRequests(month) {
           stores = await response.json();
           updateStoreSelects();
         } catch (error) {
-          console.error("Erro ao carregar lojas:", error);
           showNotification("Erro ao carregar lojas", "error");
         }
       }
@@ -508,7 +504,6 @@ async function loadExistingRequests(month) {
             const userName = userData.employeeName || userData.username;
             greetingElement.innerHTML = `${icon} Olá, ${userName}! ${greeting}!`;
           } catch (error) {
-            console.error("Erro ao decodificar token:", error);
             greetingElement.innerHTML = `${icon} ${greeting}!`;
           }
         }
@@ -569,7 +564,6 @@ async function loadExistingRequests(month) {
 
           setupFilterEvents();
         } catch (error) {
-          console.error("Erro na inicialização:", error);
           logout();
         }
       }
@@ -651,7 +645,6 @@ async function loadExistingRequests(month) {
           updateEmployeeSelect();
           renderTaskGrid();
         } catch (error) {
-          console.error("Erro ao carregar funcionários:", error);
           showNotification("Erro ao carregar funcionários", "error");
         }
       }
@@ -675,7 +668,6 @@ async function loadExistingRequests(month) {
 
           return JSON.parse(jsonPayload);
         } catch (error) {
-          console.error("Erro ao decodificar token:", error);
           return null;
         }
       }
@@ -786,7 +778,6 @@ async function loadExistingRequests(month) {
           renderTaskGrid();
           updateStatistics();
         } catch (error) {
-          console.error("Erro ao carregar tarefas:", error);
           showNotification("Erro ao carregar tarefas", "error");
         }
       }
@@ -833,7 +824,6 @@ async function loadExistingRequests(month) {
             }
     
         } catch (error) {
-            console.error("Erro ao atualizar select de funcionários:", error);
             showNotification("Erro ao carregar funcionários disponíveis", "error");
         }
     }
@@ -1015,7 +1005,6 @@ function isValidAlternativeSchedule(schedule) {
             );
         });
     } catch (error) {
-        console.error('Erro na validação do horário alternativo:', error);
         return false;
     }
 }
@@ -1033,13 +1022,6 @@ function getEmployeeWorkHours(emp, selectedDate = null) {
             date = new Date(); // Data atual
         }
 
-        // Usar toLocaleDateString para garantir que estamos no dia correto no timezone local
-        console.log('Debug - Data local:', {
-            dataOriginal: selectedDate,
-            dataConvertida: date.toLocaleDateString('pt-BR'),
-            diaSemanaNum: date.getDay(),
-            diaSemana: date.toLocaleDateString('pt-BR', { weekday: 'long' })
-        });
 
         // Obter o dia da semana (0-6) e converter para 1-7
         let currentDay = date.getDay();
@@ -1049,13 +1031,6 @@ function getEmployeeWorkHours(emp, selectedDate = null) {
             const altSchedule = typeof emp.alternative_schedule === 'string' 
                 ? JSON.parse(emp.alternative_schedule) 
                 : emp.alternative_schedule;
-
-            console.log('Debug - Horário Alternativo:', {
-                funcionario: emp.name,
-                dia: currentDay,
-                horarios: altSchedule,
-                horarioEncontrado: altSchedule[currentDay]
-            });
 
             if (altSchedule[currentDay]) {
                 return {
@@ -1074,7 +1049,6 @@ function getEmployeeWorkHours(emp, selectedDate = null) {
             dayOfWeek: currentDay
         };
     } catch (error) {
-        console.error('Erro ao processar horário alternativo:', error);
         return {
             start: emp.work_start,
             end: emp.work_end,
@@ -1116,38 +1090,11 @@ function isWithinWorkHours(emp, selectedDate = null) {
             }
         }
 
-        console.log('Debug - Verificação de Horário:', {
-            funcionario: emp.name,
-            data: selectedDate,
-            horarioAtual: currentTime,
-            horarioTrabalho: workHours,
-            dentroDoHorario: currentTime >= workHours.start && currentTime <= workHours.end
-        });
 
         return currentTime >= workHours.start && currentTime <= workHours.end;
     } catch (error) {
-        console.error('Erro ao verificar horário de trabalho:', error);
         return false;
     }
-}
-
-// Função de debug para testar conversão de datas
-function testDateConversion(dateString) {
-    const [year, month, day] = dateString.split('-').map(Number);
-    const date = new Date(year, month - 1, day);
-    
-    console.log('Debug - Teste de Data:', {
-        dataOriginal: dateString,
-        dataLocal: date.toLocaleDateString('pt-BR'),
-        diaSemana: date.toLocaleDateString('pt-BR', { weekday: 'long' }),
-        diaNumero: date.getDay(),
-        diaConvertido: date.getDay() === 0 ? 7 : date.getDay(),
-        componentesData: {
-            ano: year,
-            mes: month,
-            dia: day
-        }
-    });
 }
       // Atualizar status da tarefa
       async function updateTaskStatus(taskId, status) {
@@ -1179,7 +1126,6 @@ function testDateConversion(dateString) {
           await loadTasks(); // Recarregar todas as tarefas
           showNotification("Status atualizado com sucesso", "success");
         } catch (error) {
-          console.error("Erro ao atualizar status:", error);
           showNotification(error.message, "error");
         }
       }
@@ -1198,7 +1144,6 @@ function testDateConversion(dateString) {
           if (!response.ok) throw new Error("Erro ao buscar histórico");
           return await response.json();
         } catch (error) {
-          console.error("Erro ao buscar histórico:", error);
           return [];
         }
       }
@@ -1249,14 +1194,12 @@ function testDateConversion(dateString) {
                     };
                 });
     
-            console.log('Debug - Disponibilidade dos funcionários:', employeeAvailability);
     
             // Filtrar funcionários realmente disponíveis
             const availableEmployees = employeeAvailability
                 .filter(ea => ea.isAvailable)
                 .sort((a, b) => a.currentTaskCount - b.currentTaskCount); // Ordenar por menor número de tarefas
     
-            console.log('Debug - Funcionários disponíveis ordenados:', availableEmployees);
     
             // Verificar tarefas não atribuídas
             const unassignedTasks = tasks.filter(task => 
@@ -1312,7 +1255,6 @@ function testDateConversion(dateString) {
             const result = await response.json();
     
             if (!response.ok) {
-                console.log('Debug - Erro na resposta:', result);
                 throw new Error(result.message || 'Erro ao distribuir tarefas');
             }
     
@@ -1337,10 +1279,7 @@ function testDateConversion(dateString) {
             );
     
         } catch (error) {
-            console.error("Erro ao distribuir tarefas:", error);
-            if (error.details) {
-                console.log('Detalhes do erro:', error.details);
-            }
+            
             showNotification(
                 `Erro ao distribuir tarefas: ${error.message}`, 
                 "error"
@@ -1489,7 +1428,6 @@ function testDateConversion(dateString) {
 
           showNotification("Tarefa criada com sucesso", "success");
         } catch (error) {
-          console.error("Erro ao salvar tarefa:", error);
           showNotification(error.message, "error");
         }
       }
@@ -1525,7 +1463,6 @@ function testDateConversion(dateString) {
           await loadTasks(); // Recarregar todas as tarefas
           showNotification("Tarefa excluída com sucesso", "success");
         } catch (error) {
-          console.error("Erro ao excluir tarefa:", error);
           showNotification(error.message, "error");
         }
       }
@@ -1578,7 +1515,6 @@ function testDateConversion(dateString) {
           renderTaskGrid();
           updateStatistics();
         } catch (error) {
-          console.error("Erro ao carregar tarefas:", error);
           showNotification("Erro ao carregar tarefas", "error");
         }
       }
@@ -1622,7 +1558,6 @@ function testDateConversion(dateString) {
           document.getElementById("activeEmployees").textContent =
             activeEmployees;
         } catch (error) {
-          console.error("Erro ao atualizar estatísticas:", error);
         }
       }
 

@@ -62,7 +62,7 @@ class TaskController {
 
             res.json(processedTasks);
         } catch (error) {
-            console.error('Erro ao buscar tarefas:', error);
+            
             res.status(500).json({ 
                 message: 'Erro ao buscar tarefas',
                 error: error.message 
@@ -125,7 +125,7 @@ class TaskController {
                 message: 'Tarefa criada com sucesso'
             });
         } catch (error) {
-            console.error('Erro ao criar tarefa:', error);
+            
             res.status(500).json({ 
                 message: 'Erro ao criar tarefa',
                 error: error.message 
@@ -196,7 +196,7 @@ class TaskController {
             await db.run("DELETE FROM tasks WHERE id = ?", [id]);
             res.json({ message: "Tarefa excluída com sucesso" });
         } catch (error) {
-            console.error("Erro ao excluir tarefa:", error);
+            
             res.status(500).json({ message: "Erro ao excluir tarefa" });
         }
     }
@@ -281,7 +281,7 @@ class TaskController {
                 });
             }
         } catch (error) {
-            console.error("Erro ao atualizar status:", error);
+            
             res.status(500).json({ message: "Erro ao atualizar status" });
         }
     }
@@ -292,7 +292,7 @@ class TaskController {
             const tasks = await db.all("SELECT * FROM tasks WHERE is_fixed = 1");
             res.json(tasks);
         } catch (error) {
-            console.error(error);
+            
             res.status(500).json({ message: "Erro ao buscar tarefas fixas" });
         }
     }
@@ -324,7 +324,7 @@ class TaskController {
                 isFixed: true,
             });
         } catch (error) {
-            console.error(error);
+            
             res.status(500).json({ message: "Erro ao criar tarefa fixa" });
         }
     }
@@ -351,7 +351,7 @@ class TaskController {
 
             res.json(history);
         } catch (error) {
-            console.error("Erro ao buscar histórico:", error);
+            
             res.status(500).json({ message: "Erro ao buscar histórico" });
         }
     }
@@ -499,7 +499,7 @@ class TaskController {
             const availableEmployees = employees.filter(emp => {
                 // Primeiro verifica folga
                 if (emp.on_leave === 1) {
-                    console.log(`${emp.name} está de folga`);
+                    
                     return false;
                 }
     
@@ -522,13 +522,13 @@ class TaskController {
     
                 // Se for hoje, deve estar dentro do horário de trabalho
                 if (isToday && !isInWorkHours) {
-                    console.log(`${emp.name} está fora do horário de trabalho (${currentTime} não está entre ${emp.effective_work_start} e ${emp.effective_work_end})`);
+                    
                     return false;
                 }
     
                 // Para datas futuras, verificar início do expediente
                 if (!isToday && currentTime < emp.effective_work_start) {
-                    console.log(`${emp.name} ainda não iniciou o expediente`);
+                    
                     return false;
                 }
     
@@ -631,7 +631,7 @@ class TaskController {
             res.json(result);
     
         } catch (error) {
-            console.error('Erro na distribuição de tarefas:', error);
+            
             res.status(500).json({
                 success: false,
                 message: 'Erro ao distribuir tarefas',

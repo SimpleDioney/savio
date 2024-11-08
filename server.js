@@ -33,10 +33,10 @@ async function startServer() {
         await initializeDb();
         
         app.listen(PORT, () => {
-            console.log(`Servidor rodando na porta ${PORT}`);
+            
         });
     } catch (error) {
-        console.error("Erro ao iniciar servidor:", error);
+        
         process.exit(1);
     }
 }

@@ -9,7 +9,7 @@ class StoreController {
             );
             res.json(stores);
         } catch (error) {
-            console.error('Erro ao buscar lojas:', error);
+            
             res.status(500).json({ message: 'Erro ao buscar lojas' });
         }
     }
@@ -41,7 +41,7 @@ class StoreController {
                 message: 'Loja criada com sucesso'
             });
         } catch (error) {
-            console.error('Erro ao criar loja:', error);
+            
             res.status(500).json({ message: 'Erro ao criar loja' });
         }
     }
@@ -63,7 +63,7 @@ class StoreController {
 
             res.json({ message: 'Loja atualizada com sucesso' });
         } catch (error) {
-            console.error('Erro ao atualizar loja:', error);
+            
             res.status(500).json({ message: 'Erro ao atualizar loja' });
         }
     }
@@ -109,7 +109,7 @@ class StoreController {
                 affectedEmployees: result.affectedEmployees
             });
         } catch (error) {
-            console.error('Erro ao remover loja:', error);
+            
             if (error.message === 'Loja não encontrada') {
                 res.status(404).json({ message: error.message });
             } else {

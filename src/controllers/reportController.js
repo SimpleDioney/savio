@@ -110,7 +110,7 @@ class ReportController {
 
             res.json(response);
         } catch (error) {
-            console.error('Erro ao gerar relatório:', error);
+            
             res.status(500).json({ 
                 message: 'Erro ao gerar relatório',
                 error: error.message 

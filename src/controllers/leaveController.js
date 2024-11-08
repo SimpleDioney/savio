@@ -26,7 +26,7 @@ class LeaveController {
             const leaves = await db.all(query, params);
             res.json(leaves);
         } catch (error) {
-            console.error("Erro ao buscar folgas:", error);
+            
             res.status(500).json({ message: "Erro ao buscar folgas" });
         }
     }
@@ -47,7 +47,7 @@ class LeaveController {
                 date,
             });
         } catch (error) {
-            console.error(error);
+            
             res.status(500).json({ message: "Erro ao registrar folga" });
         }
     }
@@ -72,7 +72,7 @@ class LeaveController {
 
             res.json({ message: "Folga removida com sucesso" });
         } catch (error) {
-            console.error("Erro ao remover folga:", error);
+            
             res.status(500).json({ message: "Erro ao remover folga" });
         }
     }
@@ -145,7 +145,7 @@ class LeaveController {
 
             res.json(requestsList);
         } catch (error) {
-            console.error('Erro ao buscar solicitações:', error);
+            
             res.status(500).json({ message: 'Erro ao buscar solicitações' });
         }
     }
@@ -194,7 +194,7 @@ class LeaveController {
                 requestId: result.requestId
             });
         } catch (error) {
-            console.error('Erro ao criar solicitação:', error);
+            
             res.status(500).json({ message: 'Erro ao criar solicitação' });
         }
     }
@@ -252,7 +252,7 @@ class LeaveController {
                 dates: result.dates
             });
         } catch (error) {
-            console.error('Erro ao processar solicitação:', error);
+            
             res.status(500).json({ message: 'Erro ao processar solicitação' });
         }
     }

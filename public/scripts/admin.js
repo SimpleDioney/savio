@@ -32,7 +32,6 @@ let employees = [];
         // Atualizar todos os selects de loja
         updateStoreSelects();
     } catch (error) {
-        console.error('Erro na inicialização:', error);
         logout();
     }
 }
@@ -95,7 +94,6 @@ async function loadLeaveRequests() {
             `).join('');
         
     } catch (error) {
-        console.error('Erro:', error);
         showNotification('Erro ao carregar solicitações', 'error');
     }
 }
@@ -132,7 +130,7 @@ async function approveLeaveRequest(requestId) {
         showNotification('Solicitação aprovada com sucesso', 'success');
         await loadLeaveRequests();
     } catch (error) {
-        console.error('Erro:', error);
+        
         showNotification('Erro ao aprovar solicitação', 'error');
     }
 }
@@ -155,7 +153,7 @@ async function rejectLeaveRequest(requestId) {
         await loadLeaveRequests();
         await updateLeavesCalendar(); // Atualizar calendário após rejeição
     } catch (error) {
-        console.error('Erro:', error);
+        
         showNotification('Erro ao rejeitar solicitação', 'error');
     }
 }
@@ -175,7 +173,7 @@ async function rejectLeaveRequest(requestId) {
           updateStoresList();
           updateStoreSelects();
         } catch (error) {
-          console.error("Erro ao carregar lojas:", error);
+          
           showNotification("Erro ao carregar lojas", "error");
         }
       }
@@ -259,7 +257,7 @@ async function rejectLeaveRequest(requestId) {
           event.target.reset();
           await loadStores();
         } catch (error) {
-          console.error("Erro ao adicionar loja:", error);
+          
           showNotification(error.message, "error");
         }
       }
@@ -295,7 +293,7 @@ async function rejectLeaveRequest(requestId) {
           showNotification("Loja atualizada com sucesso", "success");
           await loadStores();
         } catch (error) {
-          console.error("Erro ao editar loja:", error);
+          
           showNotification("Erro ao atualizar loja", "error");
         }
       }
@@ -322,7 +320,7 @@ async function rejectLeaveRequest(requestId) {
             loadEmployees()
         ]);
     } catch (error) {
-        console.error('Erro ao remover loja:', error);
+        
         showNotification(error.message, 'error');
     }
 }
@@ -350,7 +348,7 @@ async function rejectLeaveRequest(requestId) {
           updateEmployeesList();
           updateEmployeeSelects();
         } catch (error) {
-          console.error("Erro ao carregar funcionários:", error);
+          
           showNotification("Erro ao carregar funcionários", "error");
         }
       }
@@ -406,7 +404,7 @@ async function rejectLeaveRequest(requestId) {
                         </div>
                     `;
                 } catch (e) {
-                    console.error('Erro ao processar horários alternativos:', e);
+                    
                 }
             }
 
@@ -552,7 +550,7 @@ function getDayName(day) {
 
         return currentTime >= workStartMinutes && currentTime <= workEndMinutes;
     } catch (error) {
-        console.error('Erro ao verificar horário:', error);
+        
         return false;
     }
 }
@@ -561,7 +559,7 @@ function getDayName(day) {
 function addScheduleRow() {
     const template = document.getElementById('scheduleRowTemplate');
     if (!template) {
-        console.error('Template de horário não encontrado');
+        
         return;
     }
 
@@ -608,7 +606,7 @@ function removeScheduleRow(button) {
 
           showNotification("Tarefa excluída com sucesso", "success");
         } catch (error) {
-          console.error("Erro ao excluir tarefa:", error);
+          
           showNotification(error.message, "error");
         }
       }
@@ -639,7 +637,7 @@ function removeScheduleRow(button) {
           await loadFixedTasks();
           showNotification("Tarefa fixa excluída com sucesso", "success");
         } catch (error) {
-          console.error("Erro ao excluir tarefa fixa:", error);
+          
           showNotification(error.message, "error");
         }
       }
@@ -674,7 +672,7 @@ function removeScheduleRow(button) {
           await loadTasks();
           showNotification("Status atualizado com sucesso", "success");
         } catch (error) {
-          console.error("Erro ao atualizar status:", error);
+          
           showNotification(error.message, "error");
         }
       }
@@ -756,7 +754,7 @@ function removeScheduleRow(button) {
         event.target.reset();
         await loadEmployees();
     } catch (error) {
-        console.error("Erro ao adicionar funcionário:", error);
+        
         showNotification(error.message, "error");
     }
 }
@@ -895,7 +893,7 @@ async function editEmployeeModal(id) {
         // Prevenir scroll do body
         document.body.style.overflow = 'hidden';
     } catch (error) {
-        console.error('Erro ao abrir modal de edição:', error);
+        
         showNotification('Erro ao abrir formulário de edição', 'error');
     }
 }
@@ -926,7 +924,7 @@ function generateAlternativeScheduleHTML(scheduleData) {
             </div>
         `;
     } catch (e) {
-        console.error('Erro ao processar horários alternativos:', e);
+        
         return '';
     }
 }
@@ -975,7 +973,7 @@ async function updateEmployee(event, id) {
         closeEditModal();
         await loadEmployees();
     } catch (error) {
-        console.error('Erro ao atualizar funcionário:', error);
+        
         showNotification(error.message, 'error');
     }
 }
@@ -1010,7 +1008,7 @@ function generateExistingSchedules(scheduleData) {
     try {
         schedules = typeof scheduleData === 'string' ? JSON.parse(scheduleData) : scheduleData;
     } catch (e) {
-        console.error('Erro ao processar horários alternativos:', e);
+        
         return '';
     }
 
@@ -1065,7 +1063,7 @@ function addEditScheduleRow() {
           showNotification("Funcionário removido com sucesso", "success");
           await loadEmployees();
         } catch (error) {
-          console.error("Erro ao remover funcionário:", error);
+          
           showNotification("Erro ao remover funcionário", "error");
         }
       }
@@ -1093,7 +1091,7 @@ function addEditScheduleRow() {
           event.target.reset();
           await loadFixedTasks();
         } catch (error) {
-          console.error("Erro ao adicionar tarefa fixa:", error);
+          
           showNotification("Erro ao adicionar tarefa fixa", "error");
         }
       }
@@ -1132,7 +1130,7 @@ function addEditScheduleRow() {
             )
             .join("");
         } catch (error) {
-          console.error("Erro ao carregar tarefas fixas:", error);
+          
           showNotification("Erro ao carregar tarefas fixas", "error");
         }
       }
@@ -1160,7 +1158,6 @@ function addEditScheduleRow() {
           event.target.reset();
           await updateLeavesCalendar();
         } catch (error) {
-          console.error("Erro ao adicionar folga:", error);
           showNotification("Erro ao adicionar folga", "error");
         }
       }
@@ -1272,7 +1269,6 @@ function addEditScheduleRow() {
               });
             });
         } catch (error) {
-          console.error("Erro ao atualizar calendário:", error);
           showNotification("Erro ao atualizar calendário", "error");
         }
       }
@@ -1314,7 +1310,6 @@ function addEditScheduleRow() {
           updateEmployeesList();
           updateEmployeeSelects();
         } catch (error) {
-          console.error("Erro ao carregar funcionários:", error);
           showNotification("Erro ao carregar funcionários", "error");
         }
       }
@@ -1335,7 +1330,6 @@ function addEditScheduleRow() {
           showNotification("Folga removida com sucesso", "success");
           await updateLeavesCalendar();
         } catch (error) {
-          console.error("Erro ao remover folga:", error);
           showNotification("Erro ao remover folga", "error");
         }
       }
@@ -1524,7 +1518,6 @@ function addEditScheduleRow() {
             </div>
         `;
     } catch (error) {
-        console.error("Erro ao gerar relatório:", error);
         showNotification("Erro ao gerar relatório", "error");
     }
 }
@@ -1631,7 +1624,6 @@ function formatDate(dateStr) {
               if (e.target === this) closeTaskModal();
             });
         } catch (error) {
-          console.error("Erro ao carregar tarefas:", error);
           showNotification("Erro ao carregar tarefas", "error");
         }
       }

@@ -109,7 +109,7 @@ class EmployeeController {
                 message: 'Funcionário criado com sucesso'
             });
         } catch (error) {
-            console.error('Erro ao criar funcionário:', error);
+            
             res.status(500).json({ 
                 message: 'Erro ao criar funcionário',
                 error: error.message
@@ -156,7 +156,7 @@ class EmployeeController {
             const employees = await db.all(query, params);
             res.json(employees);
         } catch (error) {
-            console.error('Erro ao buscar funcionários:', error);
+            
             res.status(500).json({ message: 'Erro ao buscar funcionários' });
         }
     }
@@ -184,7 +184,7 @@ class EmployeeController {
 
             res.json(employees);
         } catch (error) {
-            console.error(error);
+            
             res.status(500).json({ message: "Erro ao verificar disponibilidade" });
         }
     }
@@ -206,7 +206,7 @@ class EmployeeController {
             const leaves = await db.all(query, params);
             res.json(leaves);
         } catch (error) {
-            console.error(error);
+            
             res.status(500).json({ message: "Erro ao buscar folgas do funcionário" });
         }
     }
@@ -239,7 +239,7 @@ class EmployeeController {
 
             res.json(processedTasks);
         } catch (error) {
-            console.error('Erro ao buscar tarefas:', error);
+            
             res.status(500).json({ message: 'Erro ao buscar tarefas' });
         }
     }
@@ -349,7 +349,7 @@ class EmployeeController {
                 message: "Funcionário atualizado com sucesso"
             });
         } catch (error) {
-            console.error("Erro ao atualizar funcionário:", error);
+            
             res.status(500).json({ 
                 message: "Erro ao atualizar funcionário",
                 error: error.message 
@@ -407,7 +407,7 @@ class EmployeeController {
 
             res.json({ message: 'Funcionário excluído com sucesso' });
         } catch (error) {
-            console.error('Erro ao excluir funcionário:', error);
+            
             if (error.message === 'Funcionário não encontrado') {
                 res.status(404).json({ message: error.message });
             } else {
@@ -448,7 +448,7 @@ class EmployeeController {
                         workEnd = alternativeSchedule[currentDay].work_end;
                     }
                 } catch (error) {
-                    console.error('Erro ao processar horário alternativo:', error);
+                    
                     // Em caso de erro, mantém o horário padrão
                 }
             }
@@ -464,7 +464,7 @@ class EmployeeController {
                 isAlternativeSchedule: workStart !== employee.work_start || workEnd !== employee.work_end
             });
         } catch (error) {
-            console.error(error);
+            
             res.status(500).json({ 
                 message: "Erro ao verificar status de trabalho",
                 error: error.message 
