@@ -39,7 +39,7 @@ async function initializeDb() {
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
                 active BOOLEAN DEFAULT TRUE
-                ${!hasStoreId ? ', store_id INTEGER REFERENCES stores(id)' : ''}
+                ${!hasStoreId ? ", store_id INTEGER REFERENCES stores(id)" : ""}
             );
 
             CREATE TABLE IF NOT EXISTS tasks (
@@ -113,6 +113,14 @@ async function initializeDb() {
                 work_start TEXT DEFAULT "08:00",
                 work_end TEXT DEFAULT "16:20",
                 alternative_schedule TEXT
+            );
+
+            CREATE TABLE IF NOT EXISTS fcm_tokens(
+                employee_id INTEGER PRIMARY KEY NOT NULL
+                  REFERENCES employees(id) 
+                    ON DELETE CASCADE 
+                    ON UPDATE CASCADE,
+                token TEXT NOT NULL
             );
         `);
 

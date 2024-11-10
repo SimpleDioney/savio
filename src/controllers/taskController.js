@@ -1,4 +1,5 @@
 const database = require("../models/database");
+const firebaseNotifyservice = require("../services/firebaseNotifyService")
 
 class TaskController {
     async getTasks(req, res) {
@@ -115,6 +116,11 @@ class TaskController {
                      LEFT JOIN stores s ON t.store_id = s.id 
                      WHERE t.id = ?`,
                     [taskResult.lastID]
+                );
+
+                await firebaseNotifyservice.sendTaskNotification(
+                    employeeId,
+                    firebaseNotifyservice.NotificationTask(name, description)
                 );
 
                 return newTask;
@@ -597,6 +603,7 @@ class TaskController {
                     distributions.push({
                         taskId: task.id,
                         taskName: task.name,
+                        taskDesc: task.description,
                         employeeId: selectedEmployee.id,
                         employeeName: selectedEmployee.name,
                         previousTaskCount: selectedEmployee.current_task_count,
@@ -608,6 +615,30 @@ class TaskController {
                         d.employeeId === selectedEmployee.id
                     ).length + (selectedEmployee.current_task_count || 0);
                 }
+
+                const employeesAndTasksMap = new Map()
+                for (const dist of distributions) {
+                    console.log(`DIST: ${dist.employeeId} FOR ${dist.employeeName} TASK_NAME: ${dist.taskName}`)
+                    if (employeesAndTasksMap.has(dist.employeeId)) {
+                        employeesAndTasksMap.get(dist.employeeId).push(
+                            firebaseNotifyservice.NotificationTask(
+                                dist.taskName,
+                                dist.taskDesc
+                            )
+                        )
+                    } else {
+                        employeesAndTasksMap.set(dist.employeeId, [
+                            firebaseNotifyservice.NotificationTask(
+                                dist.taskName,
+                                dist.taskDesc
+                            )
+                        ]);
+                    }
+                }
+
+                employeesAndTasksMap.forEach((value, key) => {
+                    firebaseNotifyservice.sendTaskNotification(key, ...value)
+                });
     
                 return {
                     success: true,
