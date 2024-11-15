@@ -1,6 +1,6 @@
 const express = require("express");
 const path = require("path");
-const { initializeDb } = require("./src/models/database");
+const { initializeDb, getDb } = require("./src/models/database");
 const authRoutes = require("./src/routes/authRoutes");
 const employeeRoutes = require("./src/routes/employeeRoutes");
 const leaveRoutes = require("./src/routes/leaveRoutes");
@@ -11,6 +11,7 @@ const notifyRoutes = require("./src/routes/notifyRoutes");
 const firebaseNotifyService = require("./src/services/firebaseNotifyService")
 
 const admin = require("firebase-admin");
+const StaticConfigs = require("./src/services/staticConfigs");
 
 process.env.TZ = 'America/Sao_Paulo';
 
@@ -30,7 +31,6 @@ app.use("/api", reportRoutes);
 app.use("/api", notifyRoutes);
 
 // Inicialização do servidor
-const PORT = process.env.PORT || 5239;
 
 async function startServer() {
     try {
@@ -39,8 +39,10 @@ async function startServer() {
 
         firebaseNotifyService.initialize()
         
-        app.listen(PORT, () => {
-            console.log(`Server has been started on ${PORT}`)
+        app.listen(StaticConfigs.getPort(), () => {
+            console.log(
+                `Server has been started on ${StaticConfigs.getPort()}`
+            );
         });
     } catch (error) {
         console.error(error)

@@ -3,51 +3,80 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const admin = require("firebase-admin");
 const database = require("../models/database");
-const gServiceAccount = require("../../savio-d4406-firebase-adminsdk-9njvg-7ef51dd3a1.json")
+const gServiceAccount = require("../../savio-d4406-firebase-adminsdk-9njvg-7ef51dd3a1.json");
+const { logDebug, logError } = require("./log");
 
-function NotificationTask(taskName, taskDesc)
+function NotificationTask(taskName, taskDesc, taskPriority)
 {
     return {
-        taskName,
-        taskDesc
+        name: taskName,
+        desc: taskDesc,
+        priority: taskPriority
     }
 }
 
-async function sendTaskNotification(employeeId, ...tasks)
-{
+async function sendTaskNotification(toEmployeeId, fromEmployeeId, isAdmin, ...tasks) {
     try {
         const db = await database.getDb();
 
-        const employee = await db.get(
-            `SELECT name FROM employees WHERE id = ?`,
-            [employeeId]
-        )
-
-        if (employee == undefined || employee.name == undefined) {
-            throw Error(`fireabaseNotifyService: employee of id ${employeeId} not found`);
-        }
-
-        const fcmToken = await db.get(
-            `SELECT token FROM fcm_tokens WHERE employee_id = ?`,
-            [employeeId]
+        let { fromEmployee, toEmployee } = await db.get(
+            `SELECT
+                (SELECT name FROM employees WHERE id = ?) AS fromEmployee,
+                (SELECT name FROM employees WHERE id = ?) AS toEmployee;
+            `,
+            [fromEmployeeId, toEmployeeId]
         );
 
-        if (fcmToken == undefined || fcmToken.token == undefined) {
-            throw Error(`fireabaseNotifyService: fcmToken of id ${employeeId} not found`);
+        if (isAdmin) {
+            fromEmployee = "Admin"
         }
 
-        console.log(`TASKS FOR EMPLOYEE: ${employeeId} ${JSON.stringify(tasks)}`);
+        let formattedFromEmployee = `(${fromEmployeeId})${fromEmployee}`;
+        let formattedToEmployee = `(${toEmployeeId})${toEmployee}`;
 
-        const message = {
-            token: fcmToken.token,
+        if (toEmployee == undefined || (fromEmployee == undefined && !isAdmin)) {
+            throw Error(
+                `Unable to send notification from employee: ${formattedFromEmployee} to employee ${formattedToEmployee}`
+            );
+        }
+
+        const { token } = await db.get(
+            `SELECT (SELECT token FROM fcm_tokens WHERE employee_id = ?) AS token;`,
+            [toEmployeeId]
+        );
+
+        if (token == undefined) {
+            throw Error(`Token for user ${formattedToEmployee} not found`);
+        }
+
+        const time = new Date().getTime();
+
+        console.log(time.toString());
+        console.log(toEmployeeId.toString());
+
+        const messageToSent = {
+            token,
             data: {
-                tasks: JSON.stringify(tasks)
-            }
-        }
+                fromEmployee,
+                toEmployee,
+                toEmployeeId: toEmployeeId.toString(),
+                time: time.toString(),
+                tasks: JSON.stringify(tasks),
+            },
+        };
 
-        await admin.messaging().send(message)
+        await admin.messaging().send(messageToSent);
+
+        logDebug(
+            "FIREBASENOTIFYSERVICE",
+            `A notification was sent to user ${formattedToEmployee} for a task created by user ${formattedFromEmployee}`,
+            {
+                ...messageToSent,
+                token: null,
+            }
+        );
     } catch (error) {
-        console.error(error)
+        logError("FIREBASENOTIFYSERVICE", error);
     }
 }
 

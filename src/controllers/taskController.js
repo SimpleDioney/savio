@@ -1,5 +1,6 @@
 const database = require("../models/database");
-const firebaseNotifyservice = require("../services/firebaseNotifyService")
+const firebaseNotifyservice = require("../services/firebaseNotifyService");
+const { logError, logDebug } = require("../services/log");
 
 class TaskController {
     async getTasks(req, res) {
@@ -118,10 +119,24 @@ class TaskController {
                     [taskResult.lastID]
                 );
 
-                await firebaseNotifyservice.sendTaskNotification(
-                    employeeId,
-                    firebaseNotifyservice.NotificationTask(name, description)
-                );
+                if (employeeId != null) {
+                    const toId = newTask.employee_id;
+                    const fromId = req.user.employeeId || -1
+                    let isAdmin = false
+
+                    if (fromId == -1 && req.user.isAdmin) isAdmin = true
+
+                    firebaseNotifyservice.sendTaskNotification(
+                        toId,
+                        fromId,
+                        isAdmin,
+                        firebaseNotifyservice.NotificationTask(
+                            newTask.name,
+                            newTask.description || "Sem descrição",
+                            newTask.priority || 1
+                        )
+                    );
+                }
 
                 return newTask;
             });
@@ -389,7 +404,7 @@ class TaskController {
             const isToday = nowDate.getTime() === selectedDate.getTime();
             const isFuture = selectedDate.getTime() > nowDate.getTime();
     
-            console.log('Debug - Verificação de data:', {
+            logDebug("TASKCONTROLLER", `DistributeTasks (Verificação de data):`, {
                 dataAtualLocal: nowDate.toLocaleString(),
                 dataSelecionadaLocal: selectedDate.toLocaleString(),
                 diaSemana: dayOfWeek,
@@ -487,7 +502,7 @@ class TaskController {
                     }
                 }
     
-                console.log(`Debug - Horários de ${emp.name}:`, {
+                logDebug("TASKCONTROLLER", `DistributeTasks (Horários de ${emp.name}):`, {
                     horarioPadrao: {
                         inicio: emp.work_start,
                         fim: emp.work_end
@@ -512,7 +527,7 @@ class TaskController {
                 const isInWorkHours = currentTime >= emp.effective_work_start && 
                                     currentTime <= emp.effective_work_end;
     
-                console.log(`Verificação de horário para ${emp.name}:`, {
+                logDebug("TASKCONTROLLER", `DistributeTasks (Verificação de horário para ${emp.name}:`, {
                     horarioAtual: currentTime,
                     inicioExpediente: emp.effective_work_start,
                     fimExpediente: emp.effective_work_end,
@@ -541,7 +556,7 @@ class TaskController {
                 return true;
             });
     
-            console.log('Debug - Funcionários disponíveis:', {
+            logDebug("TASKCONTROLLER", "DistributeTasks (Active Employees)", {
                 total: availableEmployees.length,
                 dataAtual: today,
                 horaAtual: currentTime,
@@ -552,8 +567,8 @@ class TaskController {
                     tarefasAtuais: emp.current_task_count,
                     usandoHorarioAlternativo: emp.is_alternative_schedule === 1,
                     status: isToday ? 'Dentro do expediente' : 'Data futura'
-                }))
-            });
+                }))}
+            )
     
             if (availableEmployees.length === 0) {
                 return res.status(400).json({
@@ -604,6 +619,7 @@ class TaskController {
                         taskId: task.id,
                         taskName: task.name,
                         taskDesc: task.description,
+                        tasPriority: task.priority,
                         employeeId: selectedEmployee.id,
                         employeeName: selectedEmployee.name,
                         previousTaskCount: selectedEmployee.current_task_count,
@@ -616,28 +632,39 @@ class TaskController {
                     ).length + (selectedEmployee.current_task_count || 0);
                 }
 
+                const fromId = req.user.employeeId || -1;
+                let isAdmin = false;
+
+                if (fromId == -1 && req.user.isAdmin) isAdmin = true;
+
                 const employeesAndTasksMap = new Map()
                 for (const dist of distributions) {
-                    console.log(`DIST: ${dist.employeeId} FOR ${dist.employeeName} TASK_NAME: ${dist.taskName}`)
                     if (employeesAndTasksMap.has(dist.employeeId)) {
                         employeesAndTasksMap.get(dist.employeeId).push(
                             firebaseNotifyservice.NotificationTask(
                                 dist.taskName,
-                                dist.taskDesc
+                                dist.taskDesc,
+                                dist.tasPriority
                             )
                         )
                     } else {
                         employeesAndTasksMap.set(dist.employeeId, [
                             firebaseNotifyservice.NotificationTask(
                                 dist.taskName,
-                                dist.taskDesc
+                                dist.taskDesc,
+                                dist.tasPriority
                             )
                         ]);
                     }
                 }
 
                 employeesAndTasksMap.forEach((value, key) => {
-                    firebaseNotifyservice.sendTaskNotification(key, ...value)
+                    firebaseNotifyservice.sendTaskNotification(
+                        key,
+                        fromId,
+                        isAdmin,
+                        ...value
+                    )
                 });
     
                 return {
@@ -662,6 +689,8 @@ class TaskController {
             res.json(result);
     
         } catch (error) {
+
+            logError("TASKCONTROLLER", error)
             
             res.status(500).json({
                 success: false,
