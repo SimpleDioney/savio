@@ -939,43 +939,42 @@ function closeEditModal() {
 }
 
 async function updateEmployee(event, id) {
-    event.preventDefault();
+  event.preventDefault();
 
-    try {
-        const formData = {
-            name: document.getElementById('editName').value,
-            workStart: document.getElementById('editWorkStart').value,
-            workEnd: document.getElementById('editWorkEnd').value,
-            store_id: document.getElementById('editStore').value,
-            alternativeSchedule: getAlternativeScheduleFromEdit()
-        };
+  try {
+      const formData = {
+          name: document.getElementById('editName').value,
+          workStart: document.getElementById('editWorkStart').value,
+          workEnd: document.getElementById('editWorkEnd').value,
+          store_id: document.getElementById('editStore').value, // Incluindo store_id
+          alternativeSchedule: getAlternativeScheduleFromEdit()
+      };
 
-        const password = document.getElementById('editPassword').value;
-        if (password) {
-            formData.password = password;
-        }
+      const password = document.getElementById('editPassword').value;
+      if (password) {
+          formData.password = password;
+      }
 
-        const response = await fetch(`/api/employees/${id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            },
-            body: JSON.stringify(formData)
-        });
+      const response = await fetch(`/api/employees/${id}`, {
+          method: 'PUT',
+          headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify(formData)
+      });
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Erro ao atualizar funcionário');
-        }
+      if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Erro ao atualizar funcionário');
+      }
 
-        showNotification('Funcionário atualizado com sucesso', 'success');
-        closeEditModal();
-        await loadEmployees();
-    } catch (error) {
-        
-        showNotification(error.message, 'error');
-    }
+      showNotification('Funcionário atualizado com sucesso', 'success');
+      closeEditModal();
+      await loadEmployees();
+  } catch (error) {
+      showNotification(error.message, 'error');
+  }
 }
 
 

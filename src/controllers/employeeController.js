@@ -254,9 +254,10 @@ class EmployeeController {
                 password, 
                 workStart, 
                 workEnd,
-                alternativeSchedule 
+                alternativeSchedule,
+                store_id  // Adicionando store_id aos parâmetros
             } = req.body;
-
+    
             // Validar alternativeSchedule se fornecido
             if (alternativeSchedule) {
                 try {
@@ -283,7 +284,7 @@ class EmployeeController {
                     });
                 }
             }
-
+    
             const result = await database.withTransaction(async () => {
                 // Atualizar informações do funcionário
                 const db = await database.getDb();
@@ -292,64 +293,67 @@ class EmployeeController {
                      SET name = ?, 
                          work_start = ?, 
                          work_end = ?,
-                         alternative_schedule = ?
+                         alternative_schedule = ?,
+                         store_id = ?  
                      WHERE id = ?`,
                     [
                         name,
                         workStart || "09:00",
                         workEnd || "18:00",
                         alternativeSchedule ? JSON.stringify(alternativeSchedule) : null,
+                        store_id,  // Incluindo store_id na atualização
                         id
                     ]
                 );
-
+    
                 // Atualizar usuário se necessário
                 if (username || password) {
                     let query = "UPDATE users SET";
                     const params = [];
-
+    
                     if (username) {
                         query += " username = ?";
                         params.push(username);
                     }
-
+    
                     if (password) {
                         const hashedPassword = await authController.hashPassword(password);
                         query += username ? ", password = ?" : " password = ?";
                         params.push(hashedPassword);
                     }
-
+    
                     query += " WHERE employee_id = ?";
                     params.push(id);
-
+    
                     await db.run(query, params);
                 }
-
+    
                 // Buscar funcionário atualizado
                 const updatedEmployee = await db.get(
                     `SELECT 
                         e.*, 
-                        u.username 
+                        u.username,
+                        s.name as store_name
                      FROM employees e 
                      LEFT JOIN users u ON e.id = u.employee_id 
+                     LEFT JOIN stores s ON e.store_id = s.id
                      WHERE e.id = ?`,
                     [id]
                 );
-
+    
                 // Parse do alternative_schedule para o response
                 if (updatedEmployee.alternative_schedule) {
                     updatedEmployee.alternative_schedule = JSON.parse(updatedEmployee.alternative_schedule);
                 }
-
+    
                 return updatedEmployee;
             });
-
+    
             res.json({
                 ...result,
                 message: "Funcionário atualizado com sucesso"
             });
         } catch (error) {
-            
             res.status(500).json({ 
                 message: "Erro ao atualizar funcionário",
                 error: error.message 
