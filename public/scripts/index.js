@@ -167,79 +167,85 @@
         const [year, monthNum] = month.split("-");
         const calendar = document.querySelector("#requestCalendar .calendar");
         calendar.innerHTML = "";
-
+    
         // Limpar seleções anteriores se não houver nenhuma seleção válida
         if (selectedDates.length !== 2) {
-          selectedDates = [];
-          updateSelectedDatesDisplay();
+            selectedDates = [];
+            updateSelectedDatesDisplay();
         }
-
+    
         // Criar cabeçalho do calendário
         const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-        const calendarHeader = document.querySelector(
-          "#requestCalendar .calendar-header"
-        );
-        calendarHeader.innerHTML = weekDays
-          .map((day) => `<div>${day}</div>`)
-          .join("");
-
+        const calendarHeader = document.querySelector("#requestCalendar .calendar-header");
+        calendarHeader.innerHTML = weekDays.map((day) => `<div>${day}</div>`).join("");
+    
         // Criar data do primeiro dia do mês
         const firstDate = new Date(parseInt(year), parseInt(monthNum) - 1, 1);
-        const firstDay = firstDate.getDay(); // 0 = Domingo, 6 = Sábado
-        const daysInMonth = new Date(
-          parseInt(year),
-          parseInt(monthNum),
-          0
-        ).getDate();
-
+        const firstDay = firstDate.getDay();
+        const daysInMonth = new Date(parseInt(year), parseInt(monthNum), 0).getDate();
+    
         // Adicionar dias vazios até o primeiro dia do mês
         for (let i = 0; i < firstDay; i++) {
-          const emptyDay = document.createElement("div");
-          emptyDay.className = "calendar-day empty";
-          calendar.appendChild(emptyDay);
+            const emptyDay = document.createElement("div");
+            emptyDay.className = "calendar-day empty";
+            calendar.appendChild(emptyDay);
         }
-
+    
+        // Buscar a loja do usuário atual
+        const currentEmployee = employees.find(emp => emp.id === currentUser.employeeId);
+        const userStoreId = currentEmployee?.store_id;
+    
         // Adicionar todos os dias do mês
         for (let day = 1; day <= daysInMonth; day++) {
-          const currentDate = new Date(
-            parseInt(year),
-            parseInt(monthNum) - 1,
-            day
-          );
-          const dateString = currentDate.toISOString().split("T")[0];
-          const dayOfWeek = currentDate.getDay();
-
-          const isSaturday = dayOfWeek === 6;
-          const isSunday = dayOfWeek === 0;
-          const isWeekend = isSaturday || isSunday;
-          const isUnavailable = existingRequests.some(
-            (req) => req.date === dateString
-          );
-          const isSelected = selectedDates.includes(dateString);
-
-          const dayElement = document.createElement("div");
-          dayElement.className = "calendar-day";
-
-          if (isWeekend) dayElement.classList.add("weekend");
-          if (isUnavailable) dayElement.classList.add("unavailable");
-          if (isSelected) dayElement.classList.add("selected");
-
-          // Adicionar indicador de Sáb/Dom
-          dayElement.textContent = `${day}${
-            isSaturday ? " (Sáb)" : isSunday ? " (Dom)" : ""
-          }`;
-          dayElement.dataset.date = dateString;
-          dayElement.dataset.dayOfWeek = dayOfWeek;
-
-          // Adicionar evento de clique apenas para fins de semana não indisponíveis
-          if (isWeekend && !isUnavailable) {
-            dayElement.addEventListener("click", () => selectDate(dayElement));
-            dayElement.style.cursor = "pointer";
-          }
-
-          calendar.appendChild(dayElement);
+            const currentDate = new Date(parseInt(year), parseInt(monthNum) - 1, day);
+            const dateString = currentDate.toISOString().split("T")[0];
+            const dayOfWeek = currentDate.getDay();
+    
+            const isSaturday = dayOfWeek === 6;
+            const isSunday = dayOfWeek === 0;
+            const isWeekend = isSaturday || isSunday;
+            
+            // Verificar se existe solicitação pendente para a mesma loja
+            const isUnavailable = existingRequests.some(req => 
+                req.date === dateString && 
+                req.storeId === userStoreId &&
+                req.status === 'pending'
+            );
+            
+            const isSelected = selectedDates.includes(dateString);
+    
+            const dayElement = document.createElement("div");
+            dayElement.className = "calendar-day";
+    
+            if (isWeekend) dayElement.classList.add("weekend");
+            if (isUnavailable) dayElement.classList.add("unavailable");
+            if (isSelected) dayElement.classList.add("selected");
+    
+            // Adicionar indicador de Sáb/Dom
+            dayElement.textContent = `${day}${isSaturday ? " (Sáb)" : isSunday ? " (Dom)" : ""}`;
+            dayElement.dataset.date = dateString;
+            dayElement.dataset.dayOfWeek = dayOfWeek;
+    
+            // Adicionar evento de clique apenas para fins de semana não indisponíveis
+            if (isWeekend && !isUnavailable) {
+                dayElement.addEventListener("click", () => selectDate(dayElement));
+                dayElement.style.cursor = "pointer";
+            }
+    
+            // Adicionar tooltip se estiver indisponível
+            if (isUnavailable) {
+                const request = existingRequests.find(req => 
+                    req.date === dateString && 
+                    req.storeId === userStoreId
+                );
+                if (request) {
+                    dayElement.title = "Data já solicitada por outro funcionário da loja";
+                }
+            }
+    
+            calendar.appendChild(dayElement);
         }
-      }
+    }
 
       function selectDate(element) {
         const date = element.dataset.date;
@@ -341,41 +347,42 @@
 }
 
 async function loadExistingRequests(month) {
-    try {
-        if (!month) {
-            month = new Date().toISOString().slice(0, 7);
-        }
+  try {
+      if (!month) {
+          month = new Date().toISOString().slice(0, 7);
+      }
 
-        const response = await fetch(`/api/leave-requests?month=${month}`, {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-        });
-        
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Erro ao carregar solicitações');
-        }
-        
-        const requests = await response.json();
-        
-        // Mapear as datas das solicitações para verificar disponibilidade
-        existingRequests = [];
-        requests.forEach(request => {
-            request.dates.forEach(date => {
-                existingRequests.push({
-                    date: date,
-                    employeeId: request.employeeId,
-                    status: request.status
-                });
-            });
-        });
+      const response = await fetch(`/api/leave-requests?month=${month}`, {
+          headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+      });
+      
+      if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Erro ao carregar solicitações');
+      }
+      
+      const requests = await response.json();
+      
+      // Mapear as datas das solicitações para verificar disponibilidade
+      existingRequests = [];
+      requests.forEach(request => {
+          request.dates.forEach(date => {
+              existingRequests.push({
+                  date: date,
+                  employeeId: request.employeeId,
+                  storeId: request.storeId,
+                  status: request.status
+              });
+          });
+      });
 
-        return existingRequests;
-    } catch (error) {
-        showNotification('Erro ao carregar solicitações existentes', 'error');
-        return [];
-    }
+      return existingRequests;
+  } catch (error) {
+      showNotification('Erro ao carregar solicitações existentes', 'error');
+      return [];
+  }
 }
 
       // Atualizar relógio a cada segundo

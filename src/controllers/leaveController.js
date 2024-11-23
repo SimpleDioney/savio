@@ -99,10 +99,13 @@ class LeaveController {
                     lr.status,
                     lr.created_at,
                     lrd.date,
-                    e.name as employee_name
+                    e.name as employee_name,
+                    e.store_id,
+                    s.name as store_name
                 FROM leave_requests lr
                 JOIN leave_request_dates lrd ON lr.id = lrd.request_id
                 JOIN employees e ON lr.employee_id = e.id
+                LEFT JOIN stores s ON e.store_id = s.id
                 WHERE strftime('%Y-%m', lrd.date) = ?
                 AND lr.status = 'pending'  
             `;
@@ -129,6 +132,8 @@ class LeaveController {
                         employeeName: curr.employee_name,
                         status: curr.status,
                         createdAt: curr.created_at,
+                        storeId: curr.store_id,
+                        storeName: curr.store_name,
                         dates: []
                     };
                 }
@@ -136,16 +141,8 @@ class LeaveController {
                 return acc;
             }, {});
 
-            const requestsList = Object.values(groupedRequests);
-            
-            // Mandar resposta vazia caso não haja solicitações pendentes
-            if (requestsList.length === 0) {
-                return res.json([]);
-            }
-
-            res.json(requestsList);
+            res.json(Object.values(groupedRequests));
         } catch (error) {
-            
             res.status(500).json({ message: 'Erro ao buscar solicitações' });
         }
     }
@@ -154,21 +151,38 @@ class LeaveController {
         try {
             const { dates } = req.body;
 
-            // Verificar se as datas são válidas (sábado e domingo consecutivos)
             if (!dates || dates.length !== 2) {
                 return res.status(400).json({ message: 'Selecione um sábado e domingo consecutivos' });
             }
 
             const db = await database.getDb();
 
-            // Verificar se já existe solicitação para estas datas
-            const existingRequests = await db.get(
-                'SELECT COUNT(*) as count FROM leave_request_dates WHERE date IN (?, ?)',
-                dates
+            // Buscar a loja do funcionário que está fazendo a solicitação
+            const employee = await db.get(
+                'SELECT store_id FROM employees WHERE id = ?',
+                [req.user.employeeId]
+            );
+
+            if (!employee.store_id) {
+                return res.status(400).json({ message: 'Funcionário não está associado a uma loja' });
+            }
+
+            // Verificar se já existe solicitação para estas datas na mesma loja
+            const existingRequests = await db.get(`
+                SELECT COUNT(*) as count
+                FROM leave_request_dates lrd
+                JOIN leave_requests lr ON lrd.request_id = lr.id
+                JOIN employees e ON lr.employee_id = e.id
+                WHERE lrd.date IN (?, ?)
+                AND e.store_id = ?
+                AND lr.status = 'pending'`,
+                [...dates, employee.store_id]
             );
 
             if (existingRequests.count > 0) {
-                return res.status(400).json({ message: 'Já existe uma solicitação para estas datas' });
+                return res.status(400).json({ 
+                    message: 'Já existe uma solicitação pendente para estas datas na sua loja' 
+                });
             }
 
             const result = await database.withTransaction(async (db) => {
@@ -194,10 +208,10 @@ class LeaveController {
                 requestId: result.requestId
             });
         } catch (error) {
-            
             res.status(500).json({ message: 'Erro ao criar solicitação' });
         }
     }
+
 
     async processLeaveRequest(req, res) {
         if (!req.user.isAdmin) {

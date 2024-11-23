@@ -37,67 +37,81 @@ let employees = [];
 }
       
 async function loadLeaveRequests() {
-    try {
-        const currentMonth = document.getElementById('calendarMonth').value || 
-                           new Date().toISOString().slice(0, 7);
-                           
-        const response = await fetch(`/api/leave-requests?month=${currentMonth}`, {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-        });
-        
-        if (!response.ok) throw new Error('Erro ao carregar solicitações');
-        
-        const requests = await response.json();
-        const container = document.getElementById('leaveRequests');
-        
-        if (requests.length === 0) {
-            container.innerHTML = '<p>Nenhuma solicitação pendente</p>';
-            return;
-        }
-        
-        container.innerHTML = requests
-            .filter(req => req.status === 'pending') // Mostrar apenas pendentes
-            .map(req => `
-                <div class="request-card">
-                    <div class="request-info">
-                        <div class="request-employee">
-                            <strong>${req.employeeName}</strong>
-                        </div>
-                        <div class="request-dates">
-                            ${req.dates.map(date => {
-                                // Criar a data com o timezone local
-                                const localDate = new Date(date + 'T00:00:00');
-                                return localDate.toLocaleDateString('pt-BR', {
-                                    weekday: 'long',
-                                    day: 'numeric',
-                                    month: 'long'
-                                });
-                            }).join('<br>')}
-                        </div>
-                        <div class="request-status">
-                            Status: ${formatRequestStatus(req.status)}
-                        </div>
-                    </div>
-                    <div class="request-actions">
-                        <button class="btn btn-success" 
-                                onclick="approveLeaveRequest(${req.id})">
-                            Aprovar
-                        </button>
-                        <button class="btn btn-danger" 
-                                onclick="rejectLeaveRequest(${req.id})">
-                            Rejeitar
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-        
-    } catch (error) {
-        showNotification('Erro ao carregar solicitações', 'error');
-    }
+  try {
+      const currentMonth = document.getElementById('calendarMonth').value || 
+                         new Date().toISOString().slice(0, 7);
+                         
+      const response = await fetch(`/api/leave-requests?month=${currentMonth}`, {
+          headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+      });
+      
+      if (!response.ok) throw new Error('Erro ao carregar solicitações');
+      
+      const requests = await response.json();
+      const container = document.getElementById('leaveRequests');
+      
+      if (requests.length === 0) {
+          container.innerHTML = '<p>Nenhuma solicitação pendente</p>';
+          return;
+      }
+      
+      container.innerHTML = requests
+          .filter(req => req.status === 'pending')
+          .map(req => `
+              <div class="request-card">
+                  <div class="request-info">
+                      <div class="request-header">
+                          <div class="request-employee">
+                              <strong>${req.employeeName}</strong>
+                              <span class="store-badge" title="Loja">
+                                  🏪 ${req.storeName || 'Sem loja'}
+                              </span>
+                          </div>
+                          <div class="request-status ${req.status}">
+                              ${formatRequestStatus(req.status)}
+                          </div>
+                      </div>
+                      <div class="request-dates">
+                          ${req.dates.map(date => {
+                              // Criar a data com o timezone local
+                              const localDate = new Date(date + 'T00:00:00');
+                              return `<div class="date-item">
+                                  <span class="date-day">
+                                      ${localDate.toLocaleDateString('pt-BR', {
+                                          weekday: 'long',
+                                          day: 'numeric',
+                                          month: 'long'
+                                      })}
+                                  </span>
+                              </div>`;
+                          }).join('')}
+                      </div>
+                      <div class="request-details">
+                          <span class="request-created">
+                              Solicitado em: ${new Date(req.createdAt).toLocaleDateString('pt-BR')}
+                          </span>
+                      </div>
+                  </div>
+                  <div class="request-actions">
+                      <button class="btn btn-success" 
+                              onclick="approveLeaveRequest(${req.id})"
+                              title="Aprovar solicitação">
+                          ✓ Aprovar
+                      </button>
+                      <button class="btn btn-danger" 
+                              onclick="rejectLeaveRequest(${req.id})"
+                              title="Rejeitar solicitação">
+                          ✕ Rejeitar
+                      </button>
+                  </div>
+              </div>
+          `).join('');
+  } catch (error) {
+      showNotification('Erro ao carregar solicitações', 'error');
+  }
 }
-
 function formatRequestStatus(status) {
     const statusMap = {
         'pending': 'Pendente',
